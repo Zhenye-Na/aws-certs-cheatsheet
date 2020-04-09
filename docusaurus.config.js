@@ -1,28 +1,28 @@
 module.exports = {
-  title: 'My Site',
-  tagline: 'The tagline of my site',
+  title: 'AWS Certs Cheatsheet',
+  tagline: 'Homemade Cheatsheet for AWS Certification Exams',
   url: 'https://your-docusaurus-test-site.com',
   baseUrl: '/',
   favicon: 'img/favicon.ico',
-  organizationName: 'facebook', // Usually your GitHub org/user name.
-  projectName: 'docusaurus', // Usually your repo name.
+  organizationName: 'zhenye-na', // Usually your GitHub org/user name.
+  projectName: 'aws-certs-cheatsheet', // Usually your repo name.
   themeConfig: {
     navbar: {
-      title: 'My Site',
+      title: 'AWS Cert. Cheatsheet',
       logo: {
         alt: 'My Site Logo',
         src: 'img/logo.svg',
       },
       links: [
         {
-          to: 'docs/doc1',
+          to: 'docs/csa/chapter0',
           activeBasePath: 'docs',
           label: 'Docs',
           position: 'left',
         },
-        {to: 'blog', label: 'Blog', position: 'left'},
+        // {to: 'blog', label: 'Blog', position: 'left'},
         {
-          href: 'https://github.com/facebook/docusaurus',
+          href: 'https://github.com/Zhenye-Na/aws-certs-cheatsheet',
           label: 'GitHub',
           position: 'right',
         },
@@ -32,10 +32,10 @@ module.exports = {
       style: 'dark',
       links: [
         {
-          title: 'Docs',
+          title: 'Exams',
           items: [
             {
-              label: 'Style Guide',
+              label: 'AWS Solution Architects - Associate',
               to: 'docs/doc1',
             },
             {
@@ -49,11 +49,7 @@ module.exports = {
           items: [
             {
               label: 'Stack Overflow',
-              href: 'https://stackoverflow.com/questions/tagged/docusaurus',
-            },
-            {
-              label: 'Discord',
-              href: 'https://discordapp.com/invite/docusaurus',
+              href: 'https://stackoverflow.com/users/8692953/zhenye-na',
             },
           ],
         },
@@ -62,20 +58,16 @@ module.exports = {
           items: [
             {
               label: 'Blog',
-              to: 'blog',
+              href: 'https://zhenye-na.github.io/',
             },
             {
               label: 'GitHub',
-              href: 'https://github.com/facebook/docusaurus',
-            },
-            {
-              label: 'Twitter',
-              href: 'https://twitter.com/docusaurus',
+              href: 'https://github.com/Zhenye-Na',
             },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} Zhenye Na Built with Docusaurus.`,
     },
   },
   presets: [
@@ -85,7 +77,7 @@ module.exports = {
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
           editUrl:
-            'https://github.com/facebook/docusaurus/edit/master/website/',
+            'https://github.com/zhenye-na/aws-certs-cheatsheet/edit/master/',
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
