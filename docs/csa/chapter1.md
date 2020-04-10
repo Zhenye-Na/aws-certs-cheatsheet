@@ -82,32 +82,14 @@ Basically, changes to object can take a little bit of time to propogate.
 
 There are several classes for S3 storage
 
-#### S3 Standard
-
-This tier provides `99.99%` availability and `99.999999999%` durability (there are 11 `9`s LOL)
-
-#### S3 - IA (Infrequently Accessed)
-
-Data that is accessed less frequently, but requires rapid access.
-
-Lower fee than S3 - Standard. but it charge for a retrieval fee
-
-#### S3 One Zone - IA / Reduce Redundancy Storage
-
-This does not require multiple availability zone data resilience
-
-#### S3 - Intelligent Tiering
-
-This tier utilized Machine Learning
-
-#### S3 - Glacier
-
-For data archive
-
-#### S3 - Glacier Deep Archive
-
-Slowest, cheapest. File retrieval time ~ 12 hours
-
+| Storage Tiers                                  | Description                                                                                                                        |
+|------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------|
+| S3 Standard                                    | This tier provides `99.99%` availability and `99.999999999%` durability (there are 11 `9`s LOL)                                    |
+| S3 - IA (Infrequently Accessed)                | Data that is accessed less frequently, but requires rapid access.  Lower fee than S3 - Standard. but it charge for a retrieval fee |
+| S3 One Zone - IA   (Reduce Redundancy Storage) | This does not require multiple availability zone data resilience                                                                   |
+| S3 - Intelligent Tiering                       | This tier utilizes Machine Learning                                                                                                |
+| S3 - Glacier                                   | For data archive                                                                                                                   |
+| S3 - Glacier Deep Archive                      | Slowest, cheapest. File retrieval time ~ 12 hours                                                                                  |
 
 ### S3 Security and Encryption
 
@@ -121,6 +103,7 @@ There are three encryption methods:
    1. S3 Managed Keys : `SSe-S3`
    2. AWS Key Management Service, Managed keys : `SSE-KMS`
    3. Server-side Encryption with Customer Provided keys : `SSE-C`
+3. Client Side Encryption, like gpg, etc.
 
 
 ### S3 Versioning
@@ -228,7 +211,7 @@ Basically there are three types of Storage Gateway:
 2. Volume Gateway
    1. Stored Volumes
    2. Cached Volumes
-3. Tape Gateway (VTL)
+3. Tape Gateway Virtual Tape Library (VTL)
 
 **File Gateway**
 
@@ -242,8 +225,14 @@ Files are stored as objects in your S3 Buckets, accessed through a Network File 
 
 => Storing Virtual Hard Disk Drive in the Cloud
 
-**Tape Gateway**
+Let's summarize the differences between **Stored Volumes** and **Cached Volumes**
 
+For **Stored Volumes**:
 
+1. Entire Dataset stored on site
+2. Asynchronously backed up to S3
 
-## Summary
+For **Cached Volumes**:
+
+1. Entire Dataset is stored on S3
+2. Most Frequently Accessed data are cached on site
