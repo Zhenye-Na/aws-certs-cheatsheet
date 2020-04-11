@@ -100,7 +100,7 @@ There are three encryption methods:
 1. Encryption In Transit
    1. SSL /TLS
 2. Encryption At Rest
-   1. S3 Managed Keys : `SSe-S3`
+   1. S3 Managed Keys : `SSE-S3`
    2. AWS Key Management Service, Managed keys : `SSE-KMS`
    3. Server-side Encryption with Customer Provided keys : `SSE-C`
 3. Client Side Encryption, like gpg, etc.
