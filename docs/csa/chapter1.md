@@ -191,6 +191,7 @@ There are two types of Distribution
 2. Objects are cached for the life of the TTL (Time To Live)
 3. You can *clear cached objects* (Invalidate the cache), but you will be charged
 4. CloudFront also supports "Restrict Viewer Access", like contents can only be viewed by "paid" users. using "Signed Urls"
+
 :::
 
 
@@ -236,3 +237,10 @@ For **Cached Volumes**:
 
 1. Entire Dataset is stored on S3
 2. Most Frequently Accessed data are cached on site
+
+
+| Type                   | Description                                                                                                                                                            |
+|------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| File Gateway (NFS)     | Files are stored as objects in your S3 buckets, accessed throught a NFS mount point.                                                                                   |
+| Volume Gateway (iSCSI) | Same using virtual directories via iSCSI block protocol. Files are stored in the cloud as Amazon EBS snapshots. Two types: (1) Stored volumnes and (2) Cached volumes. |
+| Type Gateway (VTL)     | It offers durable, cost-effective solution to archive your data in the AWS Cloud (same mecanism as Volume Gateway).                                                    |

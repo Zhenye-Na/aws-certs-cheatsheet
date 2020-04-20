@@ -4,6 +4,10 @@ title: Introduction
 sidebar_label: Contents
 ---
 
-This page is introduction of my notes.
+### AWS Certified Solutions Architect - Associate
 
-blablabla
+References
+
+- [AWS Certified Solutions Architect – Associate](https://aws.amazon.com/certification/certified-solutions-architect-associate/)
+- [AWS Documentation](https://docs.aws.amazon.com/index.html)
+
