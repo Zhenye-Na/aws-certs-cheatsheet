@@ -66,7 +66,7 @@ we will cover this in the future chapter
 
 ### EBS Volume
 
-Elastic Block Store (EBS) provides persistent block storage volumes for usage with Amazon EC2 instances in the AWS Cloud.
+**Elastic Block Store** (EBS) provides persistent block storage volumes for usage with Amazon EC2 instances in the AWS Cloud.
 
 Each Amazon EBS volume is **automatically replicated** with its AZ to protect you from component failure, offering high availability and durability.
 
@@ -98,7 +98,7 @@ What will happen if we terminate the EC2 Instance?
 :::
 
 
-How to migrate data form AZ1 to another different AZ (EC2 / EBS)? Step by step:
+How to migrate data from AZ1 to another different AZ (EC2 / EBS)? Step by step:
 
 1. Actions -> Create Snapshots
 2. Turn the Snapshot to an AMI
@@ -183,6 +183,16 @@ There are two different ways to encrypt root device volumes
    1. "Action" -> "Create Snapshots"
    2. "Copy the snapshot", check "Encrypt this snapshot"
    3. Create image from this snapshot, launch EC2 Instance
+
+
+All AMIs are categorized as either backed by Amazon EBSjor backed by instance store
+
+**For EBS Volumes:** The root device for an instance launched from the AMI is an *Amazon EBS volume* created from an *Amazon EBS snapshot*. Think of EBS as a virtual hard disk
+
+
+
+
+**For Instance Store Volumes:** The root device for an instance launched from the AMI is an *instance store* volume created from a template stored in *Amazon S3*. Think of snapshots as a photograph of the disk
 
 
 :::tip
@@ -310,4 +320,49 @@ This group devides each group into logical segments called **partitions**. Amazo
 No two partitions within a placement group share the same racks allowing you to isolate the impact of hardware failure within your application
 
 ![](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/images/placement-group-partition.png)
+
+
+:::tip
+
+1. A clustered placement group cannot span multiple AZs, while a spread placement and partitioned group can
+2. The name you specify for a placement group must be unique within your AWS account
+3. Only certain types of instances can be launched in a placement group, these types contain: Compute Optimized, GPU, Memory Optimized, Storage Optimized, etc..
+4. AWS recommend homogeneous instances within clustered placement groups
+5. You cannot merge placement groups
+6. You cannot move an existing instance into a placement group. You can create an AMI from your existing instance, and then launch a new instance from the AMI into a placement group
+
+:::
+
+
+## Summary
+
+- EBS Root Volumes of your DEFAULT AMI's cannot be encrypted. But you can use third-party tool to encrypt the root volume or this can be done when creating AMI's in the AWS console or using the API
+- All Inbound traffic is blocked by default, all Outbound traffic is allowed
+- Changes to Security Groups take effect immediately
+- You can have any number of EC2 instances within a security group
+- You can have multiple security groups attached to EC2 Instances
+- Security Groups are STATEFUL
+- If you create an inbound rule allowing traffic in, that traffic is automateically allowed back out again
+- You cannot block specific IP addresses using Security Groups, instead use Network Access Control Lists
+- You can specify allow rule but not deny rules
+- Snapshots are point in time copies of Volumes
+- Snapshots are incremental - this means that only the blocks that have changed since your last snapshot are moved to S3
+- In order to create a snapshot for Amazon EBS volumes that serve as root devices, you should stop the instance before taking the snapshot, you can take a snapshot while teh instance is running
+- You can create AMI's from both Volumes and Snapshots
+- You can change EBS Volume sizes on the fly, including changing the size and storage type
+- Volumes will ALWAYS be in the same AZ as the EC2 Instance
+- Snapshots of encrypted volumes and volumes restored from encrypted snapshots are encrypted automatically
+- You can share un-encrypted snapshots, these snapshots can be shared with other AWS accounts or made public
+- Instance Store Volumes are sometimes called Ephemeral Storage
+- Instance Store Volumes cannot be stopped. If the underlying host fails, you will LOSE your data.
+- EBS backed instances can be stopped. You will NOT LOSE teh data on this instance if it is stopped
+- You can reboot both, you will not lose data
+- By default, both ROOT volumes will be deleted on termination. However, with EBS volumes, you can tell AWS to keep the root device volume
+
+To encrypt an un-encrypted root device volume:
+
+- create a snapshot of the un-encrypted root device volume
+- create a copy of the snapshot and select teh encrypt opinion
+- create an AMI from teh encrypted snapshot
+- use that AMI to launch new encrypted instances
 
