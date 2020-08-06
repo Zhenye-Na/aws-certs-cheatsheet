@@ -1,5 +1,5 @@
 ---
-id: chapter2
+id: chapter02
 title: Elastic Compute Cloud
 sidebar_label: EC2
 ---

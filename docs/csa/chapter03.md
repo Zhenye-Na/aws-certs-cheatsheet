@@ -1,5 +1,5 @@
 ---
-id: chapter3
+id: chapter03
 title: Database on AWS
 sidebar_label: AWS Database
 ---
