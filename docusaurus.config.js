@@ -15,7 +15,7 @@ module.exports = {
       },
       links: [
         {
-          to: 'docs/csa/chapter0',
+          to: 'docs/csa/chapter00',
           activeBasePath: 'docs',
           label: 'Docs',
           position: 'left',
