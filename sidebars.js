@@ -2,9 +2,10 @@ module.exports = {
   Sidebar: {
     Introduction: ["intro"],
     "Solution Architect - Associate": [
-      "csa/chapter0",
-      "csa/chapter1",
-      "csa/chapter2",
+      "csa/chapter00",
+      "csa/chapter01",
+      "csa/chapter02",
+      "csa/chapter03",
     ],
     Others: ["doc1"]
   }
