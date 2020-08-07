@@ -6,6 +6,7 @@ module.exports = {
       "csa/chapter01",
       "csa/chapter02",
       "csa/chapter03",
+      "csa/chapter04",
     ],
     Others: ["doc1"]
   }
