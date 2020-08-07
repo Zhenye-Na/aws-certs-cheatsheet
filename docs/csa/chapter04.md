@@ -8,6 +8,22 @@ sidebar_label: Route53
 
 ## 1. DNS Records
 
+| Record Type | Description                 |
+|-------------|-----------------------------|
+| A           | Host Address                |
+| AAAA        | IPv6 host address           |
+| ALIAS       | Auto resolved alias         |
+| CNAME       | Canonical name for an alias |
+| MX          | Mail eXchange               |
+| NS          | Name Server                 |
+| PTR         | Pointer                     |
+| SOA         | Start Of Authority          |
+| SRV         | Location of service         |
+| TXT         | Descriptive text            |
+
+note: Elastic Load Balancers do not have pre-defined IPv4 addresses, you resolve to them using a DNS name.
+
+
 ### 1.1 Start of Authority Record (SOA)
 
 SOA Records contains information about:
@@ -16,7 +32,6 @@ SOA Records contains information about:
 2. the administrator of the zone
 3. The current version of the data file
 4. The default number of seconds for the  "time-to-live" (TTL) file on resource records
-
 
 
 ### 1.2 NS Record
@@ -30,49 +45,79 @@ The are used by top level domain servers -> direct traffic to Content DNS Server
 
 An "A Record" is a fundamental type of DNS Record
 
+**A** stands for **Address**
 
-### 1.4 Alias Record
-
-
-
-
-### Key Difference
+A Record is used by computer to translate the name of the domain to an IP Address
 
 
+### 1.4 Alias Record and CName
 
-
+- The **CNAME record** maps a name to another name. It should only be used when there are no other records on that name. Use a **CNAME** record if you want to alias one name to another name.
+- The **ALIAS record** maps a name to another name, but can co-exist with other records on that name. Use an **ALIAS record** if you're trying to alias the root domain (apex zone).
+  - Alias Record is used to map resource record sets in your hosted zone to Elastic Load Balancers / CloudFront Distributions / S3 Buckets
+    - it maps one DNS name to antoerh target DNS name
 
 
 :::tip
 
+What is TTL (Time-to-Live) ?
 
+It is the length that a **DNS record** is cached on
+
+1. Resolving Server
+2. User's local PC
+
+in *seconds*
 
 :::
 
 
 
-
-
 ## 2. Routing Policies
 
+:::info
 
-### 2.1 Simple Routing
+References: https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-policy.html
 
+:::
 
+### 2.1  Simple Routing Policy
 
+One record with **multiple IP addresses**. If you specify **multiple values in a record**, Route53 returns all values to the user in a **random order**.
 
+> If you choose the simple routing policy in the Route 53 console, you can't create multiple records that have the same name and type, but you can specify multiple values in the same record, such as multiple IP addresses. (If you choose the simple routing policy for an *alias record*, you can specify only one AWS resource or one record in the current hosted zone.) If you specify multiple values in a record, Route 53 returns all values to the recursive resolver in random order, and the resolver returns the values to the client (such as a web browser) that submitted the DNS query. The client then chooses a value and resubmits the query.
 
+### 2.2  Weighted Routing Policy
 
+Allows you split your traffic based on different weights assigned. For example, you can set 10% of your traffict to go to US-EAST-1 and 90% to EU-WEST-1.
 
+You can gradually change the balance by changing the weights. If you want to stop sending traffic to a resource, you can change the weight for that record to 0.
 
+### 2.3  Letancy Routing Policy
 
+Allows you to route your traffic based on the lowest network latency for your end user (ie which region will give them the fastest response time).
 
+To use latency-based routing, we need to create a latency resource record set for EC2 or ELB resource in each region that hosts your website.
 
+Latency-based routing is based on latency measurements performed *over a period of time*, and the measurements reflect these changes.
 
+### 2.4  Failover Routing Policy
 
+Failover routing lets you route traffic to a resource when the resource is healthy or to a different resource when the first resource is unhealthy.
 
+This is used when you want to create an active/passive set up. For example, you may want your primary site to be in EU-WEST-2 and your secondary DR Site in AP-SOUTHEAST-2. Route53 will monitor the health or your primary site using health checks.
 
+### 2.5  Geolocation Routing Policy
 
+Geolocation works by mapping IP addresses to locations. However, some IP addresses aren't mapped to geographic locations, so even if you create geolocation records that cover all seven continents, Amazon Route 53 will receive some DNS queries from locations that it can't identify. You can create a default record that handles both queries from IP addresses that aren't mapped to any location and queries that come from locations that you haven't created geolocation records for. **If you don't create a default record, Route 53 returns a "no answer" response for queries from those locations.**
 
+### 2.6  Geoproximity Routing Policy (Traffict Flow Only)
 
+Geoproximity routing lets Route53 route traffic to your resources based on the geographic location of your users and your resources. You can also optionally choose to route more traffic or less to a given resource by specifying a value, known as a bias. A bias expands or shrinks the size of the geographic region from which traffic ir routed to a resource.
+
+### 2.7  Multivalue Answer Policy
+
+It lets you configure Route53 to return multiple values, such as IP addresses for your web servers, in response to DNS queries. You can specify multiple values for almost any record, but multivalue answer routing also lets you check the health of each resource, so Route53 returns only values for healthy resources.
+
+Similar to simple routing but with health checks on each record set
 
