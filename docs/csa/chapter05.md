@@ -7,10 +7,10 @@ sidebar_label: VPC
 # Virtual Private Cloud (VPC)
 
 
-<div align="center">
-  <img src="https://sgitario.github.io/images/aws-vpn-1.png" width="80%">
-  <p>image source: https://sgitario.github.io/aws-certified-solutions-architect-summary/</p>
-</div>
+![Virtual Private Cloud](https://sgitario.github.io/images/aws-vpn-1.png)
+
+> image source: https://sgitario.github.io/aws-certified-solutions-architect-summary/
+
 
 
 VPC lets us provision a **logically isolated** section of our infrastructure where we can launch AWS resources in a virtual network that we define. We have complete control over:
@@ -47,9 +47,7 @@ NO transitive peering
 >
 > To route packets directly between VPC B and VPC C, you can create a separate VPC peering connection between them (provided they do not have overlapping CIDR blocks). For more information, see Three VPCs peered together.
 
-<div align="center">
-  <img src="https://docs.aws.amazon.com/vpc/latest/peering/images/transitive-peering-diagram.png">
-</div>
+![transitive peering](https://docs.aws.amazon.com/vpc/latest/peering/images/transitive-peering-diagram.png)
 
 :::
 
@@ -166,4 +164,68 @@ Endpoints are virtual devices. They are horizontally scaled, redundant, and high
 
 ## Elastic Load Balancer (ELB)
 
-TODO
+
+There are three types of Load Balancers
+
+1. Application Load Balancer
+2. Network Load Balancer
+3. Classic Load Balancer
+
+> more details, please refer here: https://aws.amazon.com/elasticloadbalancing/
+
+### Application Load Balancer
+
+It balances HTTP / HTTPS traffic, you can also create
+
+- advanced request routing
+- sending specific requests to specific web servers
+
+### Network Load Balancer
+
+It balances TCP traffic
+
+Network Load Balancer is able to handle millions of requests per second while maintaining ultra-low latencies
+
+
+### Classic Load Balancer
+
+This is just legacy Load Balancers
+
+
+:::info
+
+suggest reading:
+
+- Elastic Load Balancing FAQs: https://aws.amazon.com/elasticloadbalancing/faqs/?nc=sn&loc=6
+
+:::
+
+
+## Advanced Load Balancer Theory
+
+### Sticky Sessions
+
+Sticky Session allows you to bind a user's session to a specific EC2 Instance. This ensures that all requests from the user during the session are sent to the same instance
+
+you can enable the "sticky session" for Application Load Balancer, but the traffic will be sent at the "Target Group" level, rather than Individual EC2 Instance
+
+### Cross-zone Load Balancing
+
+> With cross-zone load balancing, each load balancer node for your Classic Load Balancer distributes requests evenly across the registered instances in all enabled Availability Zones. If cross-zone load balancing is disabled, each load balancer node distributes requests evenly across the registered instances in its Availability Zone only.
+> 
+> https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/enable-disable-crosszone-lb.html
+
+
+### Path Patterns
+
+This creates a listener with rules to forward requests based on teh URL Path -> "path-based routing"
+
+
+:::tip
+
+1. Stickey Session is useful when user sotring information locally to that instance, more like a online file storage server, like Box or Dropbox ?
+2. Cross-zone Load Balancing eables you to balance loads across multiple AZs
+3. Path Patterns are just "path-based routing", it is based on the url path in the requests
+
+:::
+
