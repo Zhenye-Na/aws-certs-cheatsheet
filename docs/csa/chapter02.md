@@ -8,15 +8,16 @@ sidebar_label: EC2
 
 Amazon Elastic Compute Cloud is a web service that provides resizable compute ccapacity in the cloud.
 
-### EC2 Pricing Model
+### EC2 Pricing Model / Type
 
 1. On Demand: pay a fixed rate by the hour, no commitment
-2. Reserved: provide a capacity reservation
+2. Reserved: provide a capacity reservation, minimum 1 year
    1. Standard Reserved Instance
    2. Convertible Reserved Instance
    3. Scheduled Reserved Instance
 3. Spot: based on "bid", like stock, on demand
-4. Dedicated Hosts: Dedicated Hosts: physical EC2 Instance
+4. Dedicated Instances
+5. Dedicated Hosts: Dedicated Hosts: physical EC2 Instance
 
 
 :::tip
@@ -27,8 +28,20 @@ Answer: Scenario-based questions, will ask you what type of EC2 or services you 
 
 :::
 
+#### EC2 Instance Types - Main Ones
 
-For Instance type "Spot", if this is terminated by Amazon EC2, you will note be charged for a partial hour of usage. Howeverm if you terminate the instance yourself, you will be charged for *an hour* in which the instance ran.
+| Type              | Description                               |
+|-------------------|-------------------------------------------|
+| R                 | High RAM usage                            |
+| C                 | High CPU usage                            |
+| M                 | (Medium) balanced usage application       |
+| I                 | High I/O                                  |
+| G                 | High GPU usage                            |
+| T2/T3 - burstable | burstable instance with a limit threshold |
+| T2/T3 - unlimited | unlimited burstable amount                |
+
+
+For Instance type "Spot", if this is terminated by Amazon EC2, you will note be charged for a partial hour of usage. However, if you terminate the instance yourself, you will be charged for *an hour* in which the instance ran.
 
 
 Exam Tips:
@@ -54,7 +67,7 @@ we will cover this in the future chapter
 
 :::tip
 
-- All inbounds traffic is blocked by default, all outbound traffic is allowed
+- All *inbounds traffic is blocked* by default, all *outbound traffic is allowed*
 - Changes to Security Groups take effect immediately
 - You can have any number of EC2 instances with a Security Group
 - Security Groups are stateful
@@ -63,6 +76,35 @@ we will cover this in the future chapter
 
 :::
 
+**Added 2020-10-26:**
+
+Security Group controls the inbound and outbound traffic of EC2
+
+Security Group acts as the role like:
+
+- "firewall" (connection-wise) on EC2 Instance
+- Access to Ports
+- IP Ranges
+- Inbound/Outbound Network
+
+**Security Group lives outside of EC2**
+
+```
+EC2 <-> Security Group <-> WWW
+```
+
+#### Referencing other Security Groups
+
+![](/img/sg-referencing.png)
+
+> Since SG3 is not in the Inbound Rules of EC2 ①, so the EC2 with SG3 is not allowed to connect to EC2 ①
+
+
+:::tip
+
+Everytime there is a timeout problem, always check Security Groups first.
+
+:::
 
 ### EBS Volume
 
@@ -332,6 +374,49 @@ No two partitions within a placement group share the same racks allowing you to 
 6. You cannot move an existing instance into a placement group. You can create an AMI from your existing instance, and then launch a new instance from the AMI into a placement group
 
 :::
+
+### Elastic Network Interfaces (ENI)
+
+Logical component in a VPC that represents a **virtual network card**
+
+The ENI can have the following attributes
+
+- Primary provate IPv4, one or more secondary IPv4
+- One Elastic IP (IPv4) per private IPv4
+- One Public IP  ''''
+- One or more Security Groups
+- A MAC Address
+
+You can create ENI independently and attach them on the fly (move them) on EC2 instances for failover
+
+
+### Hibernate EC2
+
+![](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/images/hibernation-flow.png)
+
+| Hibernate EC2                     | Regular EC2                           |
+|-----------------------------------|---------------------------------------|
+| In-memory RAM is preserved        | stop: data on disk (EBS) kept in tact |
+| Instance boot much faster         | terminate: EBS data, lost             |
+| root EBS volume must be encrypted |                                       |
+
+> Under the hood:
+>
+> RAM state is written to a file in the root EBS Volume
+
+Hibernate EC2 is suitable for:
+
+- long running processing
+- services taken long time to initiate
+- save RAM state
+
+
+### Cross Account AMI Copy (FAQ + Exam Tip)
+
+- You can share an AMI with aother AWS account
+- Sharing an AMI does not affect the ownership of the AMI
+- If you copy an AMI that has been shared with you account, you are the owner of the target AMI in your account
+- To copy an AMI that was shared with you from another account, the owner of the source AMI must grant you read permissions for the storage that backs the AMI, either the associated EBS snapshot (for an Amaon EBS-backed AMI) or an associated S3 bucket (for an instance, store-backed AMI)
 
 
 ## Summary

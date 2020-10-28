@@ -4,10 +4,13 @@ title: IAM and S3
 sidebar_label: IAM and S3
 ---
 
+## Identity Access Management (IAM)
+
 - IAM (Identity Access Management) allows you to manage users, groups, permmisions (level of access) to the AWS console
 - S3 (Simple Storage Service) provides files storage service
 
-## Identity Access Management (IAM)
+IAM has a **global** view, not like EC2 or S3 has a **Region**
+
 
 ### IAM Features
 
