@@ -1,7 +1,7 @@
 ---
 id: chapter02
 title: Elastic Compute Cloud
-sidebar_label: EC2
+sidebar_label: EC2, EBS
 ---
 
 ## Elastic Compute Cloud (EC2)
@@ -49,6 +49,7 @@ Exam Tips:
 1. Termination Protection is turned off by default, which mean by default, you cannot terminal an EC2 Instance.
 2. On an EBS-backed Instance the default action is for the root EBS Volume to be deleted whe the instance is terminated
 3. Default AMI cannot be encrypted, additional volume can be encrypted
+
 
 
 ### Security Groups
@@ -106,23 +107,33 @@ Everytime there is a timeout problem, always check Security Groups first.
 
 :::
 
+
+
 ### EBS Volume
 
-**Elastic Block Store** (EBS) provides persistent block storage volumes for usage with Amazon EC2 instances in the AWS Cloud.
+**Elastic Block Store** (EBS) provides **persistent** block storage volumes for usage with Amazon EC2 instances in the AWS Cloud.
 
 Each Amazon EBS volume is **automatically replicated** with its AZ to protect you from component failure, offering high availability and durability.
 
 
 > EBS is like a virtual hard disk drive in the cloud
+>
+> - it uses the network to communicate the instance, which means there might be a bit of latency
+> - it can be detached from an EC2 instance and attached to another one quickly, as long as in the same AZ
 
 
-| Type                                 | Description                                                     | Use Cases                                | API Name | Volume Size  | Max. IOPS / Volume |
-|--------------------------------------|-----------------------------------------------------------------|------------------------------------------|----------|--------------|--------------------|
-| General Purpose (SSD)                | General purpose that balances price and performance             | Most work loads                          | gp2      | 1GB - 16TB   | 16000              |
-| Provisioned IOPS (SSD)               | Highest-performance SSD for mission-critical applications       | Databases                                | io1      | 4GB - 16TB   | 64000              |
-| Throughput Optimised Hard Disk Drive | Low cost HDD for freq. accessed, throughput-intensive workloads | Big Data & Data warehouses               | st1      | 500GB - 16TB | 500                |
-| Cold HDD                             | Lowest cost HDD for less freq. accessed workloads               | File Servers                             | sc1      | 500GB - 16TB | 250                |
-| EBS Magnetic                         | Previous generation HDD                                         | Workloads where data is infreq. accessed | Standard | 1GB - 1TB    | 40 - 200           |
+| Type                                           | Description                                                  | Use Cases                                | API Name | Volume Size  | Max. IOPS / Volume |
+| ---------------------------------------------- | ------------------------------------------------------------ | ---------------------------------------- | -------- | ------------ | ------------------ |
+| General Purpose (GP2 SSD)                      | General purpose that balances price and performance - can be used at boot volumes | Most work loads                          | gp2      | 1GB - 16TB   | 16000              |
+| Provisioned IOPS (SSD)                         | Highest-performance SSD for mission-critical applications, IOPS (I/O Ops Per Sec) - can be used at boot volumes | Databases                                | io1      | 4GB - 16TB   | 64000              |
+| Throughput Optimised Hard Disk Drive (ST1 HDD) | Low cost HDD for freq. accessed, throughput-intensive workloads | Big Data & Data warehouses               | st1      | 500GB - 16TB | 500                |
+| Cold HDD (SC1 HDD)                             | Lowest cost HDD for less freq. accessed workloads            | File Servers                             | sc1      | 500GB - 16TB | 250                |
+| EBS Magnetic                                   | Previous generation HDD                                      | Workloads where data is infreq. accessed | Standard | 1GB - 1TB    | 40 - 200           |
+
+
+
+EBS is locked in an AZ, which means, if an EBS volume in `us-east-1a` cannot be attached to `us-east-1b` . To move a volume across, your first need to snapshot it
+
 
 
 ### EBS Volumes and Snapshots
@@ -168,6 +179,7 @@ How to migrate data from AZ1 to another different AZ (EC2 / EBS)? Step by step:
 8. Volume will **ALWAYS** be in the same AZ as the EC2 Instance
 
 :::
+
 
 
 ### Migrations of EC2 Volume
