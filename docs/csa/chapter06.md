@@ -1,222 +1,161 @@
 ---
 id: chapter06
-title: High Availability and Scalability - ELB & ASG
-sidebar_label: HA Architecture
+title: Virtual Private Cloud
+sidebar_label: VPC
 ---
 
-# High Availability and Scalability - ELB & ASG
+# Virtual Private Cloud (VPC)
 
-## Scalability
+![Virtual Private Cloud](https://sgitario.github.io/images/aws-vpn-1.png)
 
-When it comes to scalability, it divides to two parts:
-
-1. Horizontal Scalability -> elasticity, we also call this **scale up and scale down**
-2. Vertical Scalability -> we also call this **scale in and scale out**
-
-**Horizontal Scalability**
-
-increase the number of instances/systems, distributed system
-
-**Vertical Scalability**
-
-increase the size of the instance, like from t2.micro to t2.large, etc..
+> image source: https://sgitario.github.io/aws-certified-solutions-architect-summary/
 
 
-## HA (High Availability)
+VPC lets us provision a **logically isolated** section of our infrastructure where we can launch AWS resources in a virtual network that we define. We have complete control over:
 
-HA (High Availability) is a plan for failure, you should prepare for
+- our virtual networking environment, including selection of our own IP address range, creation of subnets
+- configuration of route tables
+- network gateways
 
-1. Everything will fail
-2. You should always plan for failure
+Additionally, we can create a hardware VPN connection between our corporate datacenter and our VPC and leverage the AWS cloud as an extension of our corporative datacenter.Default 
 
-:::tip
+## VPC vs Custom VPC
 
-1. It is designed for failure
-2. you can use Multi-AZ and Multi-Regions
-3. RDS supports
-   1. Multi-AZ : this is for Disaster Recovery
-   2. Read Replicas: this is for Improving performance
-4. Scaling Out and Scaling Up
-   1. Scaling out: more EC2 Instance
-   2. Scaling UP: upgrading with more resources (RAM, CPU, etc..)
-5. Considering "cost" as a factor
-6. different S3 storage class
-
-:::
+- Default VPC
+  - user friendly, allowing you to immediately deploy instances.
+  - All Subnets in default VPC have a route out to the internet.
+  - Each EC2 instance has both a public and private IP address.
 
 
-High Availability:
+## VPC Peering (VPC <–> VPC)
 
-1. HA usually goes hand-in-hand with *Horizontal Scalability*
-2. HA means running your application / system in at least 2 data centers, to be specific, 2 AZs
-3. HA can be both *active* or *passive*
-   1. active : Horizontal Scalability
-   2. passive : RDS Multi-AZ
+- Allows you to connect one VPC with another via a **direct network route** using private IP addresses
+- Instances behave as if they were on the same private network
+- We can peer VPC's with other AWS accounts as well as with other VPCs in the same account
 
+Peering is a star configuration: 1 central VPC peers with 4 others
 
-There are two methods of Horizontal Scaling:
+:::important
 
-- Auto Scaling Group - ASG
-- Load Balancer
+NO transitive peering
 
+> reference: https://docs.aws.amazon.com/vpc/latest/peering/invalid-peering-configurations.html#transitive-peering
 
-## Load Balancing (Elastic Load Balancer - ELB)
+> You have a VPC peering connection between VPC A and VPC B (pcx-aaaabbbb), and between VPC A and VPC C (pcx-aaaacccc). There is no VPC peering connection between VPC B and VPC C. You cannot route packets directly from VPC B to VPC C through VPC A.
+>
+> To route packets directly between VPC B and VPC C, you can create a separate VPC peering connection between them (provided they do not have overlapping CIDR blocks). For more information, see Three VPCs peered together.
 
-Load Balancers are servers that forward internet traffic to multiple servers (EC2) downstream
-
-But, why would we use a load balancer, anyway?
-
-- Spread load across multiple downstream instances
-- Expose a single point of access (DNS) to your application
-- Seamlessly handle failures of downstream instances, through health checks
-- Do regular health checks to your instances
-- Provide SSL Termination (HTTPS) for your website
-- Enforce stickiness with cookies
-- HA across AZs
-- Separate public traffic from private traffic
-
-
-There are three types of Load Balancers on AWS
-
-1. Application Load Balancer
-   1. HTTP, HTTPS, WebSocket
-   2. supports SSL
-2. Network Load Balancer
-   1. TCP, TLS (secure TCP) & UDP
-   2. supports SSL
-3. Classic Load Balancer
-   1. HTTP, HTTPS, TCP
-   2. DO NOT support SSL
-
-You can setup *internal/private* or *external/public* ELBs
-
-> more details, please refer here: https://aws.amazon.com/elasticloadbalancing/
-
-### Application Load Balancer (ALB)
-
-It balances HTTP / HTTPS traffic, you can also create
-
-- advanced request routing
-- sending specific requests to specific web servers
-
-**Target Groups**
-
-> Each *target group* is used to route requests to one or more registered targets.
-
-where targets can be:
-
-- EC2 Instances (can be managed by an ASG) - HTTP
-- ECS tasks (Elastic Container Service) - HTTP
-- Lambda functions - HTTP request if translated into a JSON event
-- IP Address - must be private IPs
-
-ALB can also route to multiple target groups, also, Health checks are at teh target group level
-
-:::note
-
-Good to know about ALB
-
-- it has fixed hostname, (`xxx.<region>.elb.amazonaws.com`, etc..)
-- the application servers don't see the IP of the client *directly*, if you wanna see, then:
-  - the true IP of the client is inserted in the header `X-Forwarded-For`
-  - we can also get the Port (`X-Forwarded-Port`) and proto (`X-Forwarded-Proto`)
-
-:::
-
-### Network Load Balancer (NLB)
-
-It balances TCP (layer 4) traffic
-
-Forward TCP & UDP traffic to your instances. Network Load Balancer is able to handle millions of requests per second while maintaining ultra-low latencies, ~100ms, where 400ms for ALB
-
-NLB has <u>one static IP per AZ</u> and supports assigning Elastic IP
-
-Normally, NLB are used for extreme performance, TCP or UDP traffic
-
-
-### Classic Load Balancer (CLB)
-
-This is just legacy Load Balancers
-
-
-:::info
-
-suggest reading:
-
-- Elastic Load Balancing FAQs: https://aws.amazon.com/elasticloadbalancing/faqs/?nc=sn&loc=6
+![transitive peering](https://docs.aws.amazon.com/vpc/latest/peering/images/transitive-peering-diagram.png)
 
 :::
 
 
-## Advanced Load Balancer Theory
+## How-To
 
-### Sticky Sessions
+1. Go To VPC service > Your VPCs > Create VPC
+2. Fill IPv4 CIDR block and tenancy and click on create.
 
-Sticky Session allows you to bind a user's session to a specific EC2 Instance. This ensures that all requests from the user during the session are sent to the same instance
+No subnets and internet gateways have been created at this moment. Route table, network ACLs and security groups have been created. Security groups can't span VPCs.
 
-you can enable the "sticky session" for Application Load Balancer, but the traffic will be sent at the "Target Group" level, rather than Individual EC2 Instance
+1. Go to Subnets -> Create subnet
+2. Name it, select our VPC, the availability zone and the IPv4 CIDR block. Finally, click on create.
 
-### Cross-zone Load Balancing
+By default, no subnet has public IP. In order to do this, select the subnet and click on actions and make it auto apply public IP. Amazon always reserve 5 IP addresses with your subnets.
 
-> With cross-zone load balancing, each load balancer node for your Classic Load Balancer distributes requests evenly across the registered instances in all enabled Availability Zones. If cross-zone load balancing is disabled, each load balancer node distributes requests evenly across the registered instances in its Availability Zone only.
-> 
-> https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/enable-disable-crosszone-lb.html
+1. Go to Internet Gateways -> Create internet gateway
+2. Name it and click on create.
+3. Select it and with actions, attach the internet gateway to the VPC. (Only ONLY VPC can be attached to ONE internet gateway)
 
-![](https://image.slidesharecdn.com/thuandb-elb-deepdiveandbestpractices-awsvn-161123105843/95/meetup-4-aws-elb-deep-dive-best-practices-15-638.jpg)
+At the moment, all our VPC are public because our routes allow it. Let's fix this:
 
-- With Cross Zone Load Balancing each load balancer instance distributes evenly across *all registered instances in all AZ*
-- Otherwise, each load balancer node distributes requests evenly across the registered instances in its AZ only
+1. Go to Route Tables -> select our route table and select “Routes”
+2. Edit routes
+3. Fill destination (any IP) with target internet gateway
+4. Go to Subnet Associations
+5. Edit subnet associations in order to select the subnet that needs to be public.
 
-Cross-Zone in 3 types of Load Balancers
+Now, we can't ssh-access to our private ec2 instance from our public subnet.
 
-1. Application Load Balancer
-   1. Always on (cannot be disabled)
-   2. No charges for inter AZ data
-2. Network Load Balancer
-   1. Disabled by default
-   2. You pay charges for inter AZ data if enabled
-3. Classic Load Balancer
-   1. Disabled by default
-   2. No charges for inter AZ data if enabled
-
-
-### Path Patterns
-
-This creates a listener with rules to forward requests based on teh URL Path -> "path-based routing"
+1. Go to EC2 > Security Groups -> Create Security Group
+2. Select our VPC, type “All ICMP” (protocol ICMP) and the source the public subnet.
+3. Select our VPC, type “SSH” and the source the private subnet.
+4. Change the security group of our ec2 instance.
 
 
-:::tip
+## NAT Instances and NAT Gateways
 
-1. Stickey Session is useful when user sotring information locally to that instance, more like a online file storage server, like Box or Dropbox ?
-2. Cross-zone Load Balancing eables you to balance loads across multiple AZs
-3. Path Patterns are just "path-based routing", it is based on the url path in the requests
 
-:::
+### NAT Instance
 
-## Auto Scaling Group (ASG)
+- When you try to create a NAT Instance, **disable the source/destination check** on the instance first
+- NAT instances must be in a **public subnet**.
+- There must be a route out of the private subnet to the NAT instance, in order for this to work.
+- The amount of traffict that NAT instances can support depends on the **instance size**. If you are bottlenecking, increase the instance size.
+- You can create **high availability** using autoscaling groups, multiple subnets in different AZs, and a script to automate failover.
+- It is behind the Security Group
 
-the goal fo an ASG is to:
+### NAT Gateway
 
-1. Scale in or scale out to match an increased load or decreased load
-2. Ensure minimum / maximum number of running instances
-3. automatically register new instances to a load balancer
-
-![](/img/asg.png)
-
-### Scaling Policies
-
-- Target Tracking Scaling
-  - Most simple and easy to set-up
-  - Example I want the average ASG CPU to stay at around 40%
-- Simple / Step Scaling
-  - When some metrics is triggered, do something
-- Scheduled Actions
-  - eg. increase the min capacity to 10 at 5 pm ..
+- NAT Gateways are redundant inside the Availability Zone. **One NAT gateway per availability zone**.
+- Preferred by the enterprise.
+- Starts at 5Gbps and scales currently up to 45 Gbps. | **Scaled Automatically**
+- No need to patch
+- **Not associated with security groups**.
+- Automatically assigned a public IP address.
+- No needed to disable the source/destination check.
+- In order to have high availability, we should create a NAT gateway in each availability zone.
 
 
 
-## Elastic Beanstalk
+## Network Access Control Lists (ACL)
 
-Deploy application to AWS without actually knowing AWS
+This works like a security group for all(or any) subnets in your VPC. We can add allow/deny rules. The default VPC comes a default network ACL, and by default it allows all outbound and inbound traffic.
 
-Elastic Beanstalk automatically handles the details of capacity provisioning load balancing, scaling and application health monitoring
+When creating a custom network ACLs, by default denies all inbound and outbound traffic until you add rules. Each subnet in your VPC must be associated with a network ACL. If you don't explicitly associate a subnet with a network ACL, the subnet is automatically associated with the default network ACL.
+
+In order to block IP Addresses, we need to use ACLs, not security groups.
+
+- A network ACL can be associated to N subnets, but 1 subnet can only be associated to 1 ACL.
+- Network ACLs contain a numbered list of rules that is evaluated in order, starting with the lowest numbered rule.
+- Network ACLs have separate inbound and outbound rules, and each rule can either allow or deny traffic.
+- Network ACLs are stateless; responses to allowed inbound traffic are subject to the rules for outbound traffic and vice versa.
+
+
+## VPC Flow Logs
+
+Flow Logs is a feature that enables you to capture information about the IP traffic going to and from network interfaces in your VPC. Flow log data is stored using Amazon CloudWatch Logs. After you've created a flow log, you can view and retrieve its data in Amazon CloudWatch Logs.
+
+- There are three levels of abstraction:
+  - VPC
+  - subnet
+  - network access level.
+- You cannot enable flow logs for VPCs that are peered with your VPC unless the peer VPC is in your account.
+- You cannot tag a flow log.
+- After you've created a flow log, you cannot change its configuration; for example, you can't associate a different IAM role with the flow log.
+- Not ALL IP Traffic is monitored
+  - internal traffic done by AWS mostly
+    - traffic generated by instances when they contact the AWS DNS Server
+    - traffic generated by a windows instance
+    - DHCP traffic / reserved IP Address (five addresses I believe ?)
+
+
+
+### Bastion Hosts
+
+- A Bastion is used to **securely** administer EC2 instances (using ssh or RDP).
+- We **cannot** use a NAT Gateway as a Bastion host.
+
+### Direct Connect
+
+AWS Direct Connect is a cloud service solution that makes it easy to establish a dedicated network connection from your premises to AWS. Therefore, we can establish private connectivity between AWS and your datacenter, office, or colocation environment, which in many cases can reduce your network costs, increase bandwidth throughput and provide a more consistent network experience than Internet-based connections.
+
+### VPC Endpoint
+
+An interface endpoint is an elastic network interface with a private IP address that serves as an entry point for traffic destined to a supported service.
+
+A VPC endpoint enables you to privately connect your VPC to supported AWS services and VPC endpoint services powered by PrivateLink without requiring an internet gateway, NAT device, VPN connection or AWS Direct Connection. Instances in your VPC do not require public IP addresses to communicate with resources in the service. Traffic between your VPC and the other service does not have the Amazon network.
+
+Endpoints are virtual devices. They are horizontally scaled, redundant, and highly available VPC components that allow communication between instances in your VPC and services without imposing availability risks or bandwidth constrains on your network traffic.
+
+- There are two types: interface and gateway
+- Currently, gateway endpoints support S3 and DynamoDB
