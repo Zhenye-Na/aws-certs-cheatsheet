@@ -1,5 +1,5 @@
 ---
-id: chapter02
+id: chapter03
 title: EC2 Storage - EBS & EFS
 sidebar_label: EBS & EFS
 ---
