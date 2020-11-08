@@ -17,7 +17,7 @@ module.exports = {
         {
           to: 'docs/csa/chapter00',
           activeBasePath: 'docs',
-          label: 'Docs',
+          label: 'Notes',
           position: 'left',
         },
         // {to: 'blog', label: 'Blog', position: 'left'},
@@ -67,7 +67,7 @@ module.exports = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} Zhenye Na Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} Zhenye Na Built with Docusaurus and ❤️.`,
     },
   },
   presets: [
