@@ -1,12 +1,37 @@
 ---
 id: chapter04
 title: Database on AWS
-sidebar_label: AWS Database
+sidebar_label: RDS
 ---
 
-# Chapter 3 - Database on AWS
+> We will cover Relational Database Service (RDS) on AWS, together with AWS Aurora, DynamoDB, RedShift and ElastiCache
 
-## 1. RDS Overview
+# Database on AWS
+
+database types which are supported by AWS:
+
+- Postgres
+- MySQL
+- MariaDB
+- Oracle
+- Microsoft SQL Server
+- Aurora (* AWS Proprietary database)
+
+RDS is a managed service:
+
+- Automated provisioning, OS patching
+- Continuous backups and restore to specific timestamp (Point in TIme Restore)
+- Monitoring dashboard
+- Read replicas for improved read performance
+- Multi-AZ setup for Disaster Recovery
+- Maintenance windows for upgrades
+- Scaling capability (vertical and horizontal)
+- Storage backed by EBS (gp2 or io1)
+
+**BUT, you cannot SSH into your instances**
+
+
+## RDS Overview
 
 There are two important features for RDS
 
@@ -33,60 +58,60 @@ This is for BI / Data warehousing -> OLAP usage
 - **RDS is NOT serverless, BUT Aurora Serverless IS Severless**
 
 
-## 2. RDS - Backups, Multi-AZ & Read Replicas
+## RDS - Backups, Multi-AZ & Read Replicas
 
-### 2.1 Backups
+### Backups
 
 There are two types of Backups for RDS
 
 1. Automated Backups
 2. Database Snapshots
 
-### 2.1.1 Automated Backups
+#### Automated Backups
 
-It allows user to receover your database to any point in time within a  "Retention Period", this is around 1 ~ 35 days.
+It allows user to receover your database to any point in time within a  "Retention Period", this is around 7 ~ 35 days.
 
 Automated backup is enabled by default, the backup data is stored in S3, meanwhile, the size of your RDS is equal to the size of S3
 
+:::note
 
-### 2.1.2 Database Snapshot
+Automated backups:
 
-Database Snapshot are stored even after you delete the original RDS Instance
-
-## 2.2 Encryptions
-
-This is achieved by using AWS KMS (Key Management Service), once the ecryption is on, the followings are encrypted:
-
-- data underlying storage
-- automated backups
-- read replicas
-- database snapshots
-
-:::tip
-
-Whenever you restore either an Automated Backup or Database Snapshot, the restored version of the database will be a **new** RDS instance with a **new** DNS endpoint
+- Daily full backup of the database (during the maintenance window)
+- Transaction logs are backed-up by RDS every 5 minutes
+- This gives the ability to resotre to any pooint in time (from oldest backup to 5 minutes ago)
 
 :::
 
 
-### 2.2 Multi-AZ
+#### Database Snapshot
 
-- This is an exact copy of your production databse in another AZ
+Database Snapshot are stored even after you delete the original RDS Instance
+
+Bur it is manually trigered by the user, and retention of backup for as long as you want
+
+
+### Multi-AZ
+
+- It has only one DNS name, automatic app failover to standby, no manual intervention in apps
+- This is an exact copy of your production databse in `another AZ`
 - Automactically synchronized when your prod database is written to
 - In the event of the following:
   - planned database maintenance
   - DB instance failure
   - AZ failure
+  - Netowrk failure
 
-This is only for **Disaster Recovery**
+This is only for **Disaster Recovery**, increase *availability*
 
 
-### 2.3 Read Replicas
+### Read Replicas
 
 This allows you to have a read-only copy of your production database.
 
-This is achieved by using assynchronously replication from the primary RDS Insntace to the Read Replicas. It is better for those database with heavy read workloads
+This is achieved by using **asynchronously** replication from the primary RDS Insntace to the Read Replicas. It is better for those database with heavy read workloads
 
+> Read replicas are used for SELECT (or read) only kind of tasks, not INSERT, DELETE or UPDATE
 
 :::tip
 
@@ -101,14 +126,190 @@ Be careful for the difference between Read Replicas and the previous database ba
 
 :::
 
+#### Read Replicas - Network Cost
+
+In AWS, there is a network cost when data goes from one AZ to another, so in order to reduce cost, you can have your Read Replicas in the same AZ
 
 
-### 2.4 DynamoDB
+## RDS Securities
+
+### Encryptions
+
+This is achieved by using AWS KMS (Key Management Service), once the ecryption is on, the followings are encrypted:
+
+- data underlying storage
+- automated backups
+- read replicas
+- database snapshots
+
+:::tip
+
+Whenever you restore either an Automated Backup or Database Snapshot, the restored version of the database will be a **new** RDS instance with a **new** DNS endpoint
+
+:::
+
+#### At rest encryption and In-flight encryption
+
+**At rest encryption**
+
+We can encrypt the primary db and read replicas with AWS KMS - AES - 256 encryption, this has to be defined at launch time.
+
+If the primary db is not enrypted, the read replicas cannot be encrypted
+
+> or, unencrypted DB -> snapshot -> copy snapshot as encrypted -> create new DB from encrypted snapshot
+
+Transparent Data Encryption (TDE) available for Oracle and SQL Server
+
+**In-flight encryption**
+
+This allows to use SSL Certificates to encrypt data to RDS in flight, you have to provide SSL options with trust certificate when connecting to database
+
+
+### Network & IAM
+
+**Network Security**
+
+- RDS databases are usually deployed with a private subnet, not in a public one
+- RDS security works by leveraging security groups, it controls which IP / security group can **communicate** with RDS
+
+**Access Management**
+
+- IAM policies helo control who can manage AWS RDS through the RDS API, like "who can create a read replica ? etc.."
+- traditional username/password can be used to log into the database
+- IAM-based authentication can be used to login to RDS MySQL & PostgreSQL
+
+#### IAM Authentication
+
+- works with MySQL & PostgreSQL
+- no need for password, just a token obtained through IAM & RDS API call
+- the token has a lifetime of 15 minutes
+
+the IAM Authentication has the following benefits:
+
+- Network in/out must be encrypted using SSL
+- IAM to centrally manage users instead of DB
+- Can leverage IAM Roles and EC2 Instance profiles for easy integration
+
+
+## Aurora
+
+Aurora is the MySQL compatible, AWS solution to Relational Database
+
+### Aurora HA and Scalability
+
+:::important
+
+Aurora always maintains **2 copies of your data in each AZ**, with a **minimum of 3 AZ** => which leads to **6 copies** of your data
+
+Among these 6 copies of your data across 3 AZ:
+
+-  4 copies out of 6 needed for writes
+-  3 copies out of 6 needed for reads
+-  self healing with peer-to-peer replication
+-  storage is striped across 100s of volumes
+
+:::
+
+There is a `primary-secondary` architecture, one Aurora instance will take writes (`primary`)
+
+If there is a failover happened, the automated failover for primary db will take effect in less than 30 seconds
+
+You can have up to 15 Aurora Read Replicas serve reads, the read replicas support Cross Region Replication
+
+### Aurora Replicas
+
+There are 2 types of Aurora Replicas
+
+1. Aurora Replicas
+2. MySQL Read Replicas
+
+> Automated failover is only available with Aurora Replics
+
+Backups for Aurora, also 2 types:
+
+1. Automated Backups
+2. Data Snapshots
+
+:::note
+
+In order to migrate data from MySQL to Aurora, you can do the following things
+
+- take a data snapshot and restore in Aurora
+- create an Aurora Read replica and then promote the Read Replica as a "database service"
+
+:::
+
+
+### Aurora DB Cluster
+
+![](/img/aurora-db-cluster.png)
+
+> load balancing happens during connection
+
+
+### Aurora Serverless
+
+- Automated database instantiation and autoscaling based on actual usage
+- good for infrequent, intermittent or unpridictable workloads
+- no capacity planning needed
+- pay per second, can be more cost effective
+
+> Aurora Serverless will create Aurora instance, and client will connect to Aurora with `Proxy Fleet`, with auto-scaling turned on, which means: if the QPS is large, then more Aurora instances will be created, otherwise, will be deleted
+
+
+### Global Aurora
+
+- Aurora Cross Region Read Replicas
+  - Useful for disaster recovery
+  - Simple to put in place
+- Aurora Global Database (recommended)
+  - 1 Primary Region (read / write)
+  - Up to 5 secondary (read-only) regions, replication lag is less than 1 second
+  - Up to 16 Read Replicas per secondary region, helps for decreasing latency
+  - Promoting another region (for disaster recovery) has an RTO (Recovery Time Objective) of < 1 minute
+
+
+## ElastiCache
+
+This is the AWS solution to web-service-based in-memory cache
+
+### ElasticCache Overview
+
+- The same way RDS is to get managed Relational Databases
+- ElastiCache is to get managed Reids or Memcached
+- Helps reduce load off of databases for read intensive workloads
+- make application stateless
+- write scaling using sharding
+- Read Scaling using Read Replicas
+- Multi-AZ with failover Capability
+- AWS takes care of OS maintenance / pathcing, optimizations, setup, configuration, monitoring, failure recovery and backups
+
+
+
+ElastiCache supports Memached and Redis, it helps improve performance
+
+- If you need scale horizontally, you need choose Memcached
+- If you need Multi-AZ, Backups and Restores, you need choose Redis
+
+
+
+
+:::tip
+
+Right now, we have two methods of improving performance
+
+1. ElasticCache -> Cache layer to speed up
+2. Read Replicas -> Improved read/write on database layer
+
+:::
+
+
+## DynamoDB
 
 DynamoDB is AWS solution for NoSQL datbase, it supports **document** and **key-value pair** data models
 
 1. data is stored ion SSD Storage
-2. data spreads across 3 geographcally distinct data centers
+2. data spreads across **3** geographcally distinct data centers
 3. Eventually Conststent Reads (Default)
 4. Strongly Consistent Reads
 
@@ -128,8 +329,7 @@ A Strongly Consistent Read returns result that reflects all writes that received
 :::
 
 
-
-### 2.5 RedShift
+## RedShift
 
 This is the AWS solution to Data Warehousing service, it supports massively Parallel processing (MPP)
 
@@ -141,55 +341,7 @@ Backups for RedShift
 But it is only available in one AZ
 
 
-### 2.6 Aurora
-
-Aurora is the MySQL compatible, AWS solution to Relational Database
-
-Aurora always maintains 2 copies of your data in each AZ, with a minimum of 3 AZ => which leads to **6 copies** of your data
-
-There are 2 types of Aurora Replicas
-
-1. Aurora Replicas
-2. MySQL Read Replicas
-
-Backups for Aurora, also 2 types:
-
-1. Automated Backups
-2. Data Snapshots
-
-In order to migrate data from MySQL to Aurora, you can do the following things
-
-- take a data snapshot and restore in Aurora
-- create an Aurora Read replica and then promote the Read Replica as a "database service"
-
-There are 2 types of read replicas:
-
-1. Aurora Replicas
-2. MySQL Replicas
-
-Automated failover is only available with Aurora Replics
-
-
-### 2.7 ElasticCache
-This is the AWS solution to web-service-based in-memory cache
-
-ElasticCache supports Memached and Redis, it helps improve performance
-
-- If you need scale horizontally, you need choose Memcached
-- If you need Multi-AZ, Backups and Restores, you need choose Redis
-
-
-:::tip
-
-Right now, we have two methods of improving performance
-
-1. ElasticCache -> Cache layer to speed up
-2. Read Replicas -> Improved read/write on database layer
-
-:::
-
-
-## 3. Summary
+## Summary
 
 TBD
 
