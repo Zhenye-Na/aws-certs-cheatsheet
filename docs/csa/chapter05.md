@@ -6,6 +6,15 @@ sidebar_label: Route53
 
 # Route53 - DNS Server
 
+Route53 is a Managed DNS (Domain Name System), where DNS is a collection of rules and records which helps clients understand how to reach a server through URLs
+
+In AWS, the most common records are
+
+- A: URL to IPv4
+- AAAA: URL to IPv6
+- CNAME: URl to URL
+- ALias: URL to AWS resource
+
 ## 1. DNS Records
 
 | Record Type | Description                 |
@@ -22,6 +31,19 @@ sidebar_label: Route53
 | TXT         | Descriptive text            |
 
 note: Elastic Load Balancers do not have pre-defined IPv4 addresses, you resolve to them using a DNS name.
+
+:::important
+
+What is TTL (Time-to-Live) ?
+
+It is the length that a **DNS record** is cached on
+
+1. Resolving Server
+2. User's local PC
+
+in *seconds*
+
+:::
 
 
 ### 1.1 Start of Authority Record (SOA)
@@ -52,25 +74,14 @@ A Record is used by computer to translate the name of the domain to an IP Addres
 
 ### 1.4 Alias Record and CName
 
-- The **CNAME record** maps a name to another name. It should only be used when there are no other records on that name. Use a **CNAME** record if you want to alias one name to another name.
-- The **ALIAS record** maps a name to another name, but can co-exist with other records on that name. Use an **ALIAS record** if you're trying to alias the root domain (apex zone).
+- The **CNAME record** maps a URL to another URL. It should only be used when there are no other records on that name. Use a **CNAME** record if you want to alias one name to another name.
+  - eg. `app.mydomain.com -> xxx.newdomain.com`
+  - CNAME is only for NON ROOT DOMAIN -> `something.mydomain.com`
+- The **ALIAS record** maps a URL to a AWS Resource, but can co-exist with other records on that name. Use an **ALIAS record** if you're trying to alias the root domain (apex zone).
+  - Works for ROOT DOMAIN and NON ROOT DOMAIN, `mydomain.com`
+  - Free of charge, and native health checks
   - Alias Record is used to map resource record sets in your hosted zone to Elastic Load Balancers / CloudFront Distributions / S3 Buckets
-    - it maps one DNS name to antoerh target DNS name
-
-
-:::tip
-
-What is TTL (Time-to-Live) ?
-
-It is the length that a **DNS record** is cached on
-
-1. Resolving Server
-2. User's local PC
-
-in *seconds*
-
-:::
-
+    - it maps one DNS name to another target DNS name
 
 
 ## 2. Routing Policies
@@ -83,7 +94,9 @@ References: https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-po
 
 ### 2.1  Simple Routing Policy
 
-One record with **multiple IP addresses**. If you specify **multiple values in a record**, Route53 returns all values to the user in a **random order**.
+One record with **multiple IP addresses**. If you specify **multiple values in a record**, Route53 returns a random one which is chosen by the client
+
+Simple Routing Policy does not support health checks
 
 > If you choose the simple routing policy in the Route 53 console, you can't create multiple records that have the same name and type, but you can specify multiple values in the same record, such as multiple IP addresses. (If you choose the simple routing policy for an *alias record*, you can specify only one AWS resource or one record in the current hosted zone.) If you specify multiple values in a record, Route 53 returns all values to the recursive resolver in random order, and the resolver returns the values to the client (such as a web browser) that submitted the DNS query. The client then chooses a value and resubmits the query.
 
