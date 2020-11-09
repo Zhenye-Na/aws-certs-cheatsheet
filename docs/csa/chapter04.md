@@ -279,20 +279,38 @@ This is the AWS solution to web-service-based in-memory cache
 - ElastiCache is to get managed Reids or Memcached
 - Helps reduce load off of databases for read intensive workloads
 - make application stateless
-- write scaling using sharding
-- Read Scaling using Read Replicas
+- Write Scaling using **Sharding**
+- Read Scaling using **Read Replicas**
 - Multi-AZ with failover Capability
 - AWS takes care of OS maintenance / pathcing, optimizations, setup, configuration, monitoring, failure recovery and backups
 
+#### DB Cache
+
+![](https://d2908q01vomqb2.cloudfront.net/887309d048beef83ad3eabf2a79a64a389ab1c9f/2019/10/01/Caching-for-performance-A.jpg)
+
+> Application queries ElastiCache first, if data is not available (cache miss) then get data from RDS and store in ElastiCache, so that for the later quries, it will reach cache hit
+
+#### User Session Store
+
+![](/img/user-session-store.svg)
+
+- User log into any of the application
+- The application writes the session data into ElastiCache
+- The user hits another instance of our application
+- The instance retrieves teh data and the user is already logged in
 
 
-ElastiCache supports Memached and Redis, it helps improve performance
+### ElastiCache - Redis or Memcached
+
+| Redis                                                   | Memcached                                      |
+|---------------------------------------------------------|------------------------------------------------|
+| **Multi-AZ** with Auto-Failover                         | Multi-node for partitioning of data (sharding) |
+| Read Replicas to scale reads and have high availability | **Non persistent**                             |
+| Data Durability using AOF persistence                   | **No backup and restore**                      |
+| Backup and restore feature                              | Multi-threaded architecture                    |
 
 - If you need scale horizontally, you need choose Memcached
 - If you need Multi-AZ, Backups and Restores, you need choose Redis
-
-
-
 
 :::tip
 
@@ -302,6 +320,35 @@ Right now, we have two methods of improving performance
 2. Read Replicas -> Improved read/write on database layer
 
 :::
+
+
+### ElastiCache - Cache Security
+
+All caches in ElastiCache:
+
+- support SSL in flight encryption
+- **Do not support IAM authentication**
+- IAM policies on ElastiCache are only used for AWS API-level security
+
+
+**Redis AUTH**
+
+- You can set a "password/token" when you create a Redis Cluster
+- This is an extra level of security for you cache (on top of Security Group)
+
+Memcached
+
+- Supports SASL-based authentication
+
+
+### ElastiCache for Solutions Architects
+
+Patterns for ElastiCache
+
+1. Lazy Loading: all the read data is cached, data can become stale in cache
+2. Write Through: Adds or Update data in the cache when written to a DB (no stale data)
+3. Session Store: store temp session data in cache (using TTL features)
+4. 
 
 
 ## DynamoDB
@@ -335,17 +382,7 @@ This is the AWS solution to Data Warehousing service, it supports massively Para
 
 Backups for RedShift
 
-- this is enabled by default and it has 1 day retention period, and maximum are 35 days
+- this is **enabled** by default and it has **1** day retention period, and maximum are 35 days
 - always attempt to maintain **at least 3 copies** of your data, the original or the replicas on the compute node, the backups are on AWS S3
 
-But it is only available in one AZ
-
-
-## Summary
-
-TBD
-
-
-
-
-
+**But it is only available in one AZ**
