@@ -60,7 +60,7 @@ SOA Records contains information about:
 
 NS Record stands for **Name Server Record**
 
-The are used by top level domain servers -> direct traffic to Content DNS Server, which contains teh authoritative DNS Records
+The are used by top level domain servers -> direct traffic to Content DNS Server, which contains the authoritative DNS Records
 
 
 ### 1.3 A Record
@@ -92,6 +92,10 @@ References: https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-po
 
 :::
 
+In summary:
+
+![](https://mk0digitalcloud3kwjy.kinstacdn.com/wp-content/uploads/2019/03/AWS-Route-53-Routing-Policies.jpg)
+
 ### 2.1  Simple Routing Policy
 
 One record with **multiple IP addresses**. If you specify **multiple values in a record**, Route53 returns a random one which is chosen by the client
@@ -101,6 +105,8 @@ Simple Routing Policy does not support health checks
 > If you choose the simple routing policy in the Route 53 console, you can't create multiple records that have the same name and type, but you can specify multiple values in the same record, such as multiple IP addresses. (If you choose the simple routing policy for an *alias record*, you can specify only one AWS resource or one record in the current hosted zone.) If you specify multiple values in a record, Route 53 returns all values to the recursive resolver in random order, and the resolver returns the values to the client (such as a web browser) that submitted the DNS query. The client then chooses a value and resubmits the query.
 
 ### 2.2  Weighted Routing Policy
+
+![](https://d2908q01vomqb2.cloudfront.net/cb4e5208b4cd87268b208e49452ed6e89a68e0b8/2016/10/26/Upgrades_Image1.jpeg)
 
 Allows you split your traffic based on different weights assigned. For example, you can set 10% of your traffict to go to US-EAST-1 and 90% to EU-WEST-1.
 
@@ -114,7 +120,12 @@ To use latency-based routing, we need to create a latency resource record set fo
 
 Latency-based routing is based on latency measurements performed *over a period of time*, and the measurements reflect these changes.
 
+
+> Latency is evaluated in terms of user to designated AWS Region
+
 ### 2.4  Failover Routing Policy
+
+![](https://miro.medium.com/max/912/1*o76vPCV2AF0jeVVunVwYDA.png)
 
 Failover routing lets you route traffic to a resource when the resource is healthy or to a different resource when the first resource is unhealthy.
 
@@ -122,7 +133,11 @@ This is used when you want to create an active/passive set up. For example, you 
 
 ### 2.5  Geolocation Routing Policy
 
-Geolocation works by mapping IP addresses to locations. However, some IP addresses aren't mapped to geographic locations, so even if you create geolocation records that cover all seven continents, Amazon Route 53 will receive some DNS queries from locations that it can't identify. You can create a default record that handles both queries from IP addresses that aren't mapped to any location and queries that come from locations that you haven't created geolocation records for. **If you don't create a default record, Route 53 returns a "no answer" response for queries from those locations.**
+![](https://intellipaat.com/blog/wp-content/uploads/2019/05/r5.png)
+
+Geolocation works by mapping IP addresses to locations. However, some IP addresses aren't mapped to geographic locations, so even if you create geolocation records that cover all seven continents, Amazon Route 53 will receive some DNS queries from locations that it can't identify. You can create a **default** record that handles both queries from IP addresses that aren't mapped to any location and queries that come from locations that you haven't created geolocation records for.
+
+**If you don't create a default record, Route 53 returns a "no answer" response for queries from those locations.**
 
 ### 2.6  Geoproximity Routing Policy (Traffict Flow Only)
 
@@ -130,7 +145,30 @@ Geoproximity routing lets Route53 route traffic to your resources based on the g
 
 ### 2.7  Multivalue Answer Policy
 
+- use when routing traffic to multiple resources
+- want to associate a Route53 health checks with records
+- up to 8 healthy records are returned for each multi-value query
+- **not a substitution for having an ELB**
+
 It lets you configure Route53 to return multiple values, such as IP addresses for your web servers, in response to DNS queries. You can specify multiple values for almost any record, but multivalue answer routing also lets you check the health of each resource, so Route53 returns only values for healthy resources.
 
-Similar to simple routing but with health checks on each record set
+Similar to simple routing but with **health checks** on each record set
 
+
+## Route53 as a Registrar (*)
+
+A domain name registrat is an organization that manages the reservation fo Internet domain names
+
+Route53, GoDaddy, Google Domains ...
+
+> Domain Registrar != DNS
+
+
+:::note
+
+If you buy your domain on 3rd party website, you can still use Route53
+
+1. Create a Hosted Zone in Route53
+2. Update NS Records on 3rd party website to use Route53 **name servers**
+
+:::
