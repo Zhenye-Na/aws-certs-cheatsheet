@@ -220,3 +220,13 @@ the goal fo an ASG is to:
 Deploy application to AWS without actually knowing AWS
 
 Elastic Beanstalk automatically handles the details of capacity provisioning load balancing, scaling and application health monitoring
+
+There are 3 components in ElasticBeanStalk
+
+- Application
+- Application version :  each deployment gets assigned a version
+- Environment name (dev, test, prod ..) : free naming
+
+
+You can deploy application versions to environments and can promote application versions to the next environment; It supports Rollback feature to previous application version; Full control over lifecycle of environments
+
