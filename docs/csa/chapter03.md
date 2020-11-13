@@ -110,7 +110,6 @@ stats of sc1
 You need to make sure that the AZ of EC2 Instance is the same as the AZ of EBS Volume, otherwise this will cause a huge latency time.
 
 
-
 :::note
 
 What will happen if we terminate the EC2 Instance?
@@ -120,7 +119,6 @@ What will happen if we terminate the EC2 Instance?
 - we can create EBS and check "delete on termination"
 
 :::
-
 
 
 How to migrate data from AZ1 to another different AZ (EC2 / EBS)? Step by step:
@@ -162,23 +160,121 @@ How to migrate data from AZ1 to another different AZ (EC2 / EBS)? Step by step:
 
 ### EBS Encryption
 
+1. When you create an **encrypted EBS volume**, you get the following:
+   - Data are rest encrypted inside the volume
+   - All the data in light moving between the instance and the volume is encrypted
+   - All snapshots are encrypted
+   - All volumes created from snapshot are encrypted
+2. Encryption and decryption are handled transparently, which means you dont need to do anything
+3. Encryption has a minimal impact on latency
+4. EBS Encryption leverages keys from KMS (AES-256)
+5. Copying an un-encrypted snapshot allows encryption
+6. Snapshots of encrypted volumes are encrypted
 
+:::note
 
+Encryption: encrypt an un-encrypted EBS Volume
 
+- Create an EBS snapshot of the volume
+- Encrypt the EBS snapshot (using copy)
+- Create new EBS volume from the snapshot (the volume will also be encrypted)
+- Now you can attach teh encrypted volume to the original instance
 
-### EBS RAID
-
-
-
+:::
 
 
 ## EBS vs Instance Store
 
+There are some instances do not come with Root EBS volumes. Instead, they come with "Instance Store", which is an ephemeral storage. Instance Store is physically attached to the machine (EBS is a network drive)
 
+There are Pros and Cons for using Instance Store
+
+**Pros**
+
+- Better I/O performance
+- Good for buffer / cache / scratch data / temporary content
+- Data survives reboots
+
+
+**Cons**
+
+- On stop or termination, the instance store is lost, (since ephemeral <-> temporary)
+- You can't resize the instance store
+- Backups must be operated by user
+
+> Local EC2 Instance Store is a physical disk attached to the physical server where your EC2 is
+>
+> it has very high IOPS, but the size of it cannot be increased and the data will be lost if hardware fails happen
+
+
+### EBS RAID Options
+
+EBS is replicated within an AZ so it is already redundant storage. But if you want to **increase the IOPS** more or you want to **mirror you EBS volumes**, then you need to mount volumes in parallel in RAID settings. (RAID is possible as long as your OS supports it)
+
+Normal RAID options:
+
+- RAID 0
+- RAID 1
+- RAID 5 - not recommended for EBS
+- RAID 6 - not recommended for EBS
+
+#### RAID 0 - increasing performance
+
+![](https://cloudacademy.com/wp-content/uploads/2014/06/RAID-on-EBS-Volumes.jpg)
+
+- Combining 2 or more volumes and getting the total disk space and I/O
+- But one disk fails, then all the data is failed
+- Use cases:
+  - application need a lot of IOPS and dont need fault-tolerance
+  - a database that has replication already built-in
+- Using this, we can have a very big disk with a lot of IOPS
+
+> two 500G EBS io1 volumes with 4,000 provisioned IOPS each, will create a
+> 
+> 1,000GB RAID 0 array with an available bandwidth of 8,000 IOPS and 1,000 MB/s of throughput
+
+
+#### RAID 1 - increase fault tolerance
+
+RAID 1 is to mirror a volume to another, which means if one disk fails, then our logical volume is still working (since there is our mirroring one)
+
+Use case:
+
+- application that need increase volume fault tolerance
+- application that need service disks
+
+> two 500 GB EBS io1 volumes with 4,000 provisioned IOPS each will create
+> 
+> 500 GB RAID 1 array with an available bandwidth of 4000 IOPS and 500 MB/s throughput
 
 
 
 ## EFS (Elastic File System)
 
+![](https://docs.aws.amazon.com/efs/latest/ug/images/overview-flow.png)
+
+EFS is a managed NFS (network file system) that can be mounted on many EC2, EFS can work with EC2 instances in multi-AZ.
+
+EFS is High Available, Scalable and expensive service
+
+
+Use cases: content management, web serving, data sharing, wordpress application
+
+
+## Summary: EBS or EFS ?
+
+| EBS                                                                                                               | EFS                                     |
+|-------------------------------------------------------------------------------------------------------------------|-----------------------------------------|
+| can be attached to only one instance at a time                                                                    | can be mounted to hundreds of instances |
+| locked at the AZ level                                                                                            | can share website media files           |
+| migrating an EBS volume across AZ means first backing it up and re-create it using snapshot in another AZ         |                                         |
+| EBS backups use IO and you should avoid it while application is handling a lot of traffic                         |                                         |
+| Root EBS volumes of instances get terminated by default, if the EC2 instance gets terminated (you can disable it) |                                         |
+| if disk IO is high -> increase EBS volume size                                                                    |                                         |
+
+
+references of comparing EBS with EFS:
+
+- https://medium.com/awesome-cloud/aws-difference-between-efs-and-ebs-8c0d72a348ad
 
 
