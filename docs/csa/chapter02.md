@@ -1,391 +1,360 @@
 ---
 id: chapter02
-title: Elastic Compute Cloud
-sidebar_label: EC2
+title: S3
+sidebar_label: S3
 ---
 
-## Elastic Compute Cloud (EC2)
+## Simple Storage Service (S3)
 
-Amazon Elastic Compute Cloud is a web service that provides resizable compute ccapacity in the cloud.
+- S3 is **object-based**, it allows to upload files from 0 ~ 5 TB
+- Files are stored in *Buckets*
 
-### EC2 Pricing Model / Type
+### Basics of S3
 
-1. On Demand: pay a fixed rate by the hour, no commitment
-2. Reserved: provide a capacity reservation, minimum 1 year
-   1. Standard Reserved Instance
-   2. Convertible Reserved Instance
-   3. Scheduled Reserved Instance
-3. Spot: based on "bid", like stock, on demand
-4. Dedicated Instances
-5. Dedicated Hosts: Dedicated Hosts: physical EC2 Instance
+1. S3 is a **universal namespace**, which means the names should be **unique globally**.
+   1. for example, `https://s3 ........ amazonaws.com/<bucket_name>`, this `<bucket_name>` should be unique
+2. Once uploading successfully, it will return HTTP Status Code `200`
 
+### What are objects in S3?
 
-:::tip
+For `object` in S3, it has the several features.
 
-Question: How will this section be tested?
+1. **Key**. this is the FULL path
+   1. eg. `<bucket_url>/somePath/someFolder/filename`, here `somePath/someFolder/filename` is the Key, not just the `filename`
+   2. there are no concept of `"directories"` in S3. the key can contain slashes `/`
+2. **Value**. content of the body
+   1. max-size is 5TB, if uploading greater than 5GB, then you can use "multi-part uploading"
+3. **VersionID**. version control if enabled
+4. **MetaData**. list of text key / value pairs - system or user data
+5. **Tags**. Unicode key / value pairs (10 most), uesful for security or lifecycle
+6. **Subresources**:
+   1. Access Control List
+   2. Torrent
 
-Answer: Scenario-based questions, will ask you what type of EC2 or services you will suggest.
+### Consistency Model in S3
 
-:::
+#### Read After Write
 
-#### EC2 Instance Types - Main Ones
+If you write a new file and read it immediately afterwards, you will be able to view that file
 
-| Type              | Description                               |
-|-------------------|-------------------------------------------|
-| R                 | High RAM usage                            |
-| C                 | High CPU usage                            |
-| M                 | (Medium) balanced usage application       |
-| I                 | High I/O                                  |
-| G                 | High GPU usage                            |
-| T2/T3 - burstable | burstable instance with a limit threshold |
-| T2/T3 - unlimited | unlimited burstable amount                |
+#### Eventually Consistent
 
+If you update **AN EXISTING** file or **DELETE** a file, then read it immediately, you may get the older version or you may not. But if you wait for a minute, you will get the latest version.
 
-For Instance type "Spot", if this is terminated by Amazon EC2, you will note be charged for a partial hour of usage. However, if you terminate the instance yourself, you will be charged for *an hour* in which the instance ran.
+> Basically, changes to object can take a little bit of time to propogate.
 
+### S3 Features
 
-Exam Tips:
+1. **Tiered Storage Available**
+2. Lifecycle Management
+3. Versioning
+4. Encryption
+5. MFA Delete
+6. Secure your data using
+   1. Access Control List
+   2. Bucket Policy
 
-1. Termination Protection is turned off by default, which mean by default, you cannot terminal an EC2 Instance.
-2. On an EBS-backed Instance the default action is for the root EBS Volume to be deleted whe the instance is terminated
-3. Default AMI cannot be encrypted, additional volume can be encrypted
 
+### S3 Storage Classes
 
+There are several classes for S3 storage
 
-### Security Groups
+| Storage Tiers                                  | Description                                                                                                                        |
+|------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------|
+| S3 Standard                                    | This tier provides `99.99%` availability and `99.999999999%` durability (there are 11 `9`s LOL)                                    |
+| S3 - IA (Infrequently Accessed)                | Data that is accessed less frequently, but requires rapid access.  Lower fee than S3 - Standard. but it charge for a retrieval fee |
+| S3 One Zone - IA   (Reduce Redundancy Storage) | This does not require multiple availability zone data resilience                                                                   |
+| S3 - Intelligent Tiering                       | This tier utilizes Machine Learning                                                                                                |
+| S3 - Glacier                                   | For data archive                                                                                                                   |
+| S3 - Glacier Deep Archive                      | Slowest, cheapest. File retrieval time ~ 12 hours                                                                                  |
 
-"Network & Security" -> "Security Groups"
 
-> if you disable the HTTP 80 port, it will take effect *immediately*, the browser will time out
+### S3 Security
 
-When you create a new inbound rule, you will also create a new outbound rule
+- User based
+  - IAM policies - which API calls should be allowed for a specific user from IAM console
+- Resource based
+  - Bucket policies - bucket wide rules from the S3 console - allows cross account
+  - Object Access Control List - Finer Grain
+  - Bucket Access Control List - Less Common
 
-1. Security Groups are **stateful**
-2. Network Access Control is **stateless**
 
-we will cover this in the future chapter
+#### S3 Bucket Policies
 
+JSON based policies
 
-:::tip
+- Resources: buckets and objects
+- Actions: set of API to allow or deny
+- Effect: allow or deny
+- Principal: the account or user to apply the policy to
 
-- All *inbounds traffic is blocked* by default, all *outbound traffic is allowed*
-- Changes to Security Groups take effect immediately
-- You can have any number of EC2 instances with a Security Group
-- Security Groups are stateful
-- You cannot block network access in the security groups, instead we should use "Network Access Control Lists" (VPC Section)
-- Allow Rule (OK), Deny Rules (X)
+S3 bucket for policy to
 
-:::
+- grant public access to the bucket
+- force objects to be encrypted at upload
+- grant access to another account (Cross-Account)
 
-**Added 2020-10-26:**
 
-Security Group controls the inbound and outbound traffic of EC2
+#### S3 Security - Other
 
-Security Group acts as the role like:
+**Networking**
 
-- "firewall" (connection-wise) on EC2 Instance
-- Access to Ports
-- IP Ranges
-- Inbound/Outbound Network
+Supports VPC Endpoints (for instances, in VPC without `www` internet)
 
-**Security Group lives outside of EC2**
+**Logging an Audit**
 
-```
-EC2 <-> Security Group <-> WWW
-```
+- S3 access logs can be stored in other S3 bucket
+- API calls can be logged in AWS CloudTrail
 
-#### Referencing other Security Groups
+**User Security**
 
-![](/img/sg-referencing.png)
+- MFA
+- Signed Urls: URLs that are valid only for a limited time (eg: premium video service for logged in users)
 
-> Since SG3 is not in the Inbound Rules of EC2 ①, so the EC2 with SG3 is not allowed to connect to EC2 ①
 
 
-:::tip
+### S3 Encryption
 
-Everytime there is a timeout problem, always check Security Groups first.
+All of the new files that are uploaded to S3 buckets are **PRIVATE**
 
-:::
+There are three encryption methods:
 
+1. Encryption In Transit
+   1. SSL / TLS
+2. Encryption At Rest
+   1. S3 Managed Keys : `SSE-S3`
+   2. AWS Key Management Service, Managed keys : `SSE-KMS`
+   3. Server-side Encryption with Customer Provided keys : `SSE-C`
+3. Client Side Encryption, like gpg, etc.
 
-### Migrations of EC2 Volume
+![](https://blog.architecting.it/wp-content/uploads/2016/03/CloudianPost3Images3.jpg)
 
-I think it will be worthy to talk about ways to migrate EC2 Volume from Region / AZ to another different Refion / AZ. Here are the details to accomplish them.
+#### SSE-S3
 
-**Region to Region**
+The encryption using keys handled & managed by AWS S3, the files are encrypted at server-side.
 
-- Take a snapshot of the EC2 Volume
-- Create an AMI from the snapshot
-- <u>Copy the AMI from one Region to another</u>
-- Use the **copied AMI** to launch the new EC2 Instance in the new Region
+SSE-S3 use AES-256 as encryption type, also `"x-amz-server-side-encryption":"AES256"` must be set in the request header
 
+This diagram shows the three-step **encryption** process when using SSE-S3:
 
-**AZ to AZ**
+![](https://static.packt-cdn.com/products/9781789534474/graphics/assets/e596c805-e80a-4a6e-9ca8-cb60497754a1.png)
 
-- Take a snapshot of the EC2 Volume
-- Create an AMI from the snapshot
-- Use the AMI to launch the new EC2 Instance
+:::note
 
-
-### AMI Types
-
-EBS vs Instance Store
-
-1. Region
-2. OS
-3. Architecture
-4. Launch Permissions
-5. Storage for the root device (Root Device Volume)
-   1. Instance Store (EPHEMERAL STORAGE) "RAM-like"
-   2. EBS Backed Volumes
-
-
-An **Instance Store** provides temporary block-level storage for your instance. Instance Store Volumes are sometimes called **Ephemeral Storage**. This storage is located on disks that are physically attached to the host computer. Instance store is ideal for **temporary** storage of information that changes frequently, such as buffers, caches, scratch data, and other temporary content, or for data that is replicated across a fleet of instances, such as a load-balanced pool of web servers.
-
-> Instance store volumes cannot be stopped. If the underlying host fails, you will lose all your data.
-
-An **"EBS-backed" Instance** is an EC2 instance which uses an EBS volume as it’s root device. EBS volumes are redundant, “virtual” drives, which are not tied to any particular hardware, however they are restricted to a particular EC2 availability zone. This means that an EBS volume can move from one piece of hardware to another within the same availability zone. You can think of EBS volumes as a kind of Network Attached Storage.
-
-If the virtual machine’s hardware fails, the EBS volume can simply be moved to another virtual machine and re-launched. In theory, you won’t lose any data.
-
-Another benefit is that EBS volumes can easily be backed up and duplicated. So you can take easy backup snapshots of your volumes, create new volumes and launch new EC2 instances based on those duplicate volumes.
-
-> - EBS backed instances can be stopped. You won’t lose the data on this instance if it is stopped.
-> - By default, both root volumes will be deleted on termination. However, with EBS volumes, you can tell AWS to keep the device volume.
-
-
-### Encrypted Root Device Volumes & Snapshots
-
-There are two different ways to encrypt root device volumes
-
-1. Create EC2 Instance with Root Device VOlume encrypted at start
-2. Encrypt the Root Device later
-   1. "Action" -> "Create Snapshots"
-   2. "Copy the snapshot", check "Encrypt this snapshot"
-   3. Create image from this snapshot, launch EC2 Instance
-
-
-All AMIs are categorized as either backed by Amazon EBSjor backed by instance store
-
-**For EBS Volumes:** The root device for an instance launched from the AMI is an *Amazon EBS volume* created from an *Amazon EBS snapshot*. Think of EBS as a virtual hard disk
-
-
-
-
-**For Instance Store Volumes:** The root device for an instance launched from the AMI is an *instance store* volume created from a template stored in *Amazon S3*. Think of snapshots as a photograph of the disk
-
-
-:::tip
-
-1. Snapshots of encrypted volumes are encrypted automatically
-2. Volumes restored from encryted snapshots are encrypted automatically
-3. You can share snapshots, but only if they are unencrypted
-4. These snapshots can be shared with other AWS accounts or made public
-5. You can now encrypt root device volumes upon creation of EC2 Instance
+1. The client selects their object(s) to upload to S3 and indicates the encryption mechanism of SSE-S3 during this process.
+2. S3 then takes control of the object and encrypts it with a plaintext data key generated by S3. The result is an encrypted version of the object, which is then stored in your chosen S3 bucket.
+3. The plaintext data key that is used to encrypt the object is then encrypted with an S3 master key, resulting in an encrypted version of the key. This now-encrypted key is also stored in S3 and is associated with the encrypted data object. Finally, the plaintext data key is removed from memory in S3.
 
 :::
 
 
-### CloudWatch vs CloudTrail
+This diagram shows the four-step **decryption** process when using SSE-S3:
 
-#### CloudWatch
-
-**AWS CloudWatch** is a monitoring service to monitor your AWS resources, as well as the applications that you run on AWS. Metrics like CPU, network, disk, status check.
+![](https://static.packt-cdn.com/products/9781789534474/graphics/assets/7c2f439c-1d5c-4fe0-a397-e65938beec22.png)
 
 
-- CloudWatch is about monitoring performance.
-- CloudWatch with EC2 will monitor events every 5 minutes by default.
-- You can have 1 minute intervals by turning on detailed monitoring.
-- You can create CloudWatch alams which trigger notifications.
-- What can CloudWatch do?
-  - **Dashboards**: Creates awesome dashboards to see what is happening with your AWS environment.
-  - **Alarms**: Allows you to set Alarms that notify you when particular thresholds are hit.
-  - **Events**: Helps you to responde to state changes in your AWS resources.
-  - **Logs**: Aggregates log data.
+#### SSE-KMS
+
+![](https://www.oreilly.com/library/view/aws-certified-solutions/9781789130669/assets/0faf29ee-4a0b-4a29-99f5-c4e1ec042047.png)
+
+The encryption using keys handled & managed by AWS KMS, the files are encrypted at server-side.
+
+`"x-amz-server-side-encryption":"aws:kms"`
+
+advantages:
+
+- user control
+- audit trail
+
+#### SSE-C
+
+![](https://d2908q01vomqb2.cloudfront.net/22d200f8670dbdb3e253a90eee5098477c95c23d/2017/11/15/s3_encryption_diagram_cl_a1.png)
+
+- Server side encryption using data keys full managed by the customer outside of AWS
+- S3 does not store encryption key
+- HTTPS must be used
+
+#### Encryption In Transit
+
+AWS S3 exposes:
+
+- HTTP endpoint: non-encrypted
+- HTTPS endpoint: encryption in flight (recommended)
+
+HTTPS is mandatory for SSE-C
 
 
-CloudWatch can monitor:
+### S3 Versioning
 
-1. Compute Resources: EC2 Instances, Autoascaling Group, Elastic Load Balancers, Route53 Health Check
-2. Storage & Content Delievery: EBS Volumes, Storage Gateways, CloudFront
+S3 also supports version control, it is enabled at `bucket` level
+
+1. Stores all versions of an object, inclusding all writes and even if you delete a object. For delete operation, it is a `delete` marker. but you can see the file when the `version` is toggled on (reason see below)
+2. Backup tool
+3. Once enabled, cannot be disenabled, but you can `suspend`
+4. Integrates with **Lifecycle** rules
+5. Support MFA
+
+> any file that is not versioned prior to enabling versioning will have version `"null"`
+
+:::note
+
+Suppose the v1 version of your file is 100 KB, and you edited it to 200 KB. You upload the file again to S3. Then this file will be version 2, but the size will **300 KB**, since the size of file is accumulated
+
+:::
+
+#### Delete Marker
+
+> https://docs.aws.amazon.com/AmazonS3/latest/dev/DeleteMarker.html
+
+AWS create Delete Marker, it does so whenever you send a `DELETE` Object request on an object in a *versioning-enabled or suspended bucket*. The object named in the `DELETE` request is **not** actually deleted. Instead, the <u>delete marker becomes the current version of the object</u>. (The object's key name (or key) becomes the key of the delete marker.)
+
+If you try to get an object and its current version is a delete marker, Amazon S3 responds with:
+
+- A `404` (Object not found) error
+- A response header, x-amz-delete-marker: true
+
+The response header tells you that the object accessed was a delete marker. This response header never returns `false`; if the value is `false`, Amazon S3 does not include this response header in the response.
+
+The following figure shows how a simple `GET` on an object, whose current version is a **delete marker**, returns a `404 No Object Found error`.
+
+![](https://docs.aws.amazon.com/AmazonS3/latest/dev/images/versioning_DELETE_NoObjectFound.png)
+
+The only way to list delete markers (and other versions of an object) is by using the **versions subresource** in a `GET` Bucket versions request. A simple `GET` does not retrieve delete marker objects. The following figure shows that a `GET` Bucket request does not return objects whose current version is a delete marker.
+
+![](https://docs.aws.amazon.com/AmazonS3/latest/dev/images/versioning_GETBucketwithDeleteMarkers.png)
 
 
-#### CloudTrail
+### S3 CORS
 
-**AWS CloudTrail** increases visibility into your user and resource activity by <u>recording AWS Management Console actions and API calls</u>. You can identify which users and accounts called AWS, the source IP address from which the calls were made, and when the calls occurred.
+If you request data from another S3 bucket, you need to enable CORS
+
+**Cross Origin Resource Sharing (CORS)** allows you to limit the number of websites that can request your files in S3 and limit your costs
+
+![](https://docs.amazonaws.cn/en_us/sdk-for-javascript/v2/developer-guide/images/cors-overview.png)
+
+### Lifecycle Management with S3
+
+S3 uses lifecycle rules to manage objects
+
+1. Automates moving your objects between different storage tiers
+2. It can be used in conjection with versioning
+3. It can be applied to current versions and previous versions
+
+
+### Cross Region Replication in S3
+
+Cross Region Replication in S3 requires **enabling versioning**
+
+Keypoints of Cross Region Replication:
+
+- if you put delete marker in original bucket, it will not replicate the delte marker in CRR Bucket
+- the files already in the source bucket will not be replicated automatically
 
 
 :::tip
 
-1. CloudWatch is used for monitoring performance
-2. CloudWatch can monitor most of AWS as well as your applications that run on AWS
-3. CloudWatch with EC2 will monitor events every 5 minutes by default
-4. But you can have 1 minute interval by turning on detailed monitoring
-5. You can create CloudWatch alarms which trigger notifications
-6. CloudWatch is all about **Performance**, CloudTrail is all about **Auditing**
+1. Versioning should be enabled both in source and destination bucket
+2. Regions must be unique (LOL)
+3. Files in an existing bucket are not replicated automatically
+4. Delete markers are not replicated
+5. Delete individual versions / delete markers will not be replicated
 
 :::
 
 
-### Identity Access Management Roles
+### S3 Transfer Acceleration
 
-Instance Settings -> Attach / Replace IAM Role
-
-1. Roles are much more secure than storing access keys
-2. Roles are easier to manage
-3. Roles can be assigned to EC2 after creation for console / command line access
-4. Roles are universal, easy to manage
+This utilizes the **CloudFront Edge Networks** to accelerate your uploads to S3. Instead of uploading directly to your S3 bucket, you can use a distinct url to *upload directly to an Edge Location*, which will *then transfer to S3* using Amazon Backbone Network
 
 
-### Elastic File System (EFS)
+#### Amazon CloudFront
 
-**Elastic File System** is a file storage service for EC2 instances. EFS is easy to use and provides a simple interface that allows you to create and configure file systems quickly and easily. With EFS,
+CloudFront is a Contetnt Delievery Network (CDN), which is:
 
-- storage capacity is elastic
-- growing and shrinking automatically as you add and remove files
+a system of **distributed** servers / network that deliever webpages and other web content to a **user based on the geographic locations** of the user, origin of the webpage and a CDN.
 
-so your applications have the storage they need, when they need it.
+##### Key Terminology of CloudFront
 
-Once EC2 is created, we need to mount the EFS disks:
+**Edge Location**
 
-- TLS mount for encrypted option
-  - `mount -t efs -o tls fs-xxxx:/ /target`
-- It also supports network file system version 4 (NFSv4).
-- We only pay for the storage you use (no pre-provisioning required).
-- Can scale up to petabytes.
-- Can support thousands of concurrent NFS connections.
-- Data is stored across multiple AZ's within a Region.
-- *Read After Write* Consistency. (No eventual consistency)
+This is the location where content will be cached, and separate to the AWS Region / AZ.
+
+**Origin**
+
+This is the origin of  all the files that the CDN will distribute. This can be an
+
+1. S3 Bucket
+2. EC2 Instance
+3. Elastic Load Balancer
+4. Route53
 
 
-```
-EC2 and EBS: 1 vs 1
-EC2 and EFS: many vs 1
-```
+**Distribution**
 
-### EC2 Placement Groups
+This is the name given the CDN which consists of *a collection of Edge Locations*
 
-There are three different types of EC2 Placement Groups in AWS:
+There are two types of Distribution
 
-- Clustered Placement Group
-- Spread Placement Group
-- Partitioned Placement Group
-
-The name of placement groups must be *unique* within your AWS account. Only certain types of instances can be launched in a placement group (compute optimized, GPU, memory optimized and storage optimized). We can't move existing instances into a placement group (they must be selected when are being created).
-
-**Cluster Placement Group**
-
-This group is a logical grouping of instances within a **single Availability Zone**. A cluster placement group can span peered VPCs in the **same Region**. Instances in the same cluster placement group enjoy a higher per-flow throughput limit of up to 10 Gbps for TCP/IP traffic and are placed in the same high-bisection bandwidth segment of the network.
-
-The following image shows instances that are placed into a cluster placement group.
-
-![](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/images/placement-group-cluster.png)
-
-- low network latency
-- high network throughput
-- or both
-
-Only certain instances can be launched in this mode.
-
-**Spread Placement Group**
-
-Launching instances in a spread placement group reduces the risk of simultaneous failures that might occur when instances share the same racks. Spread placement groups provide access to distinct racks, and are therefore suitable for mixing instance types or launching instances over time.
-
-![](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/images/placement-group-spread.png)
-
-**Partition Placement Group**
-
-This group devides each group into logical segments called **partitions**. Amazon EC2 ensures that each partition within a placement group has its own set of racks. Each rack has its own network and power source. No two partitions within a placement group share the same racks, allowing you to isolate the impact of hardware failure within your application. Partition placement groups help **reduce the likelihood of correlated hardware failures** for your application.
-
-No two partitions within a placement group share the same racks allowing you to isolate the impact of hardware failure within your application
-
-![](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/images/placement-group-partition.png)
+1. Web Distribution: for website
+2. RTMP: for Media Streaming
 
 
 :::tip
 
-1. A clustered placement group cannot span multiple AZs, while a spread placement and partitioned group can
-2. The name you specify for a placement group must be unique within your AWS account
-3. Only certain types of instances can be launched in a placement group, these types contain: Compute Optimized, GPU, Memory Optimized, Storage Optimized, etc..
-4. AWS recommend homogeneous instances within clustered placement groups
-5. You cannot merge placement groups
-6. You cannot move an existing instance into a placement group. You can create an AMI from your existing instance, and then launch a new instance from the AMI into a placement group
+1. Edge Location are not just READ only - you can also write to it, since files are cached here
+2. Objects are cached for the life of the TTL (Time To Live)
+3. You can *clear cached objects* (Invalidate the cache), but you will be charged
+4. CloudFront also supports "Restrict Viewer Access", like contents can only be viewed by "paid" users. using "Signed Urls"
 
 :::
 
-### Elastic Network Interfaces (ENI)
 
-Logical component in a VPC that represents a **virtual network card**
+### Snowball and Storage Gateway
 
-The ENI can have the following attributes
+Briefly speaking:
 
-- Primary provate IPv4, one or more secondary IPv4
-- One Elastic IP (IPv4) per private IPv4
-- One Public IP  ''''
-- One or more Security Groups
-- A MAC Address
+1. Snowball is an equipment, moving large amounts of data into the AWS Cloud. It supports:
+   1. Import to S3
+   2. Export to S3
+2. Storage Gateway is a service enabling you to securely store data to the AWS Cloud for scalable and cost-effective storage
 
-You can create ENI independently and attach them on the fly (move them) on EC2 instances for failover
+#### Storage Gateway
+
+Basically there are three types of Storage Gateway:
+
+1. File Gateway
+2. Volume Gateway
+   1. Stored Volumes
+   2. Cached Volumes
+3. Tape Gateway Virtual Tape Library (VTL)
+
+**File Gateway**
+
+Files are stored as objects in your S3 Buckets, accessed through a Network File System (NFS) mounting point
+
+**Volume Gateway**
+
+1. The Volume Gateway presents your application with disk volumes using the iSCSI block protocol
+2. Asychronously back up as point-in-time snapshots, the snapshots are stored in the cloud as Amazon EBS Snapshots
+3. Snapshots are incremental backups that capture only changed blocks, but compressed to minimized charges
+
+=> Storing Virtual Hard Disk Drive in the Cloud
+
+Let's summarize the differences between **Stored Volumes** and **Cached Volumes**
+
+For **Stored Volumes**:
+
+1. Entire Dataset stored on site
+2. Asynchronously backed up to S3
+
+For **Cached Volumes**:
+
+1. Entire Dataset is stored on S3
+2. Most Frequently Accessed data are cached on site
 
 
-### Hibernate EC2
-
-![](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/images/hibernation-flow.png)
-
-| Hibernate EC2                     | Regular EC2                           |
-|-----------------------------------|---------------------------------------|
-| In-memory RAM is preserved        | stop: data on disk (EBS) kept in tact |
-| Instance boot much faster         | terminate: EBS data, lost             |
-| root EBS volume must be encrypted |                                       |
-
-> Under the hood:
->
-> RAM state is written to a file in the root EBS Volume
-
-Hibernate EC2 is suitable for:
-
-- long running processing
-- services taken long time to initiate
-- save RAM state
-
-
-### Cross Account AMI Copy (FAQ + Exam Tip)
-
-- You can share an AMI with aother AWS account
-- Sharing an AMI does not affect the ownership of the AMI
-- If you copy an AMI that has been shared with you account, you are the owner of the target AMI in your account
-- To copy an AMI that was shared with you from another account, the owner of the source AMI must grant you read permissions for the storage that backs the AMI, either the associated EBS snapshot (for an Amaon EBS-backed AMI) or an associated S3 bucket (for an instance, store-backed AMI)
-
-
-## Summary
-
-- EBS Root Volumes of your DEFAULT AMI's cannot be encrypted. But you can use third-party tool to encrypt the root volume or this can be done when creating AMI's in the AWS console or using the API
-- All Inbound traffic is blocked by default, all Outbound traffic is allowed
-- Changes to Security Groups take effect immediately
-- You can have any number of EC2 instances within a security group
-- You can have multiple security groups attached to EC2 Instances
-- Security Groups are STATEFUL
-- If you create an inbound rule allowing traffic in, that traffic is automateically allowed back out again
-- You cannot block specific IP addresses using Security Groups, instead use Network Access Control Lists
-- You can specify allow rule but not deny rules
-- Snapshots are point in time copies of Volumes
-- Snapshots are incremental - this means that only the blocks that have changed since your last snapshot are moved to S3
-- In order to create a snapshot for Amazon EBS volumes that serve as root devices, you should stop the instance before taking the snapshot, you can take a snapshot while teh instance is running
-- You can create AMI's from both Volumes and Snapshots
-- You can change EBS Volume sizes on the fly, including changing the size and storage type
-- Volumes will ALWAYS be in the same AZ as the EC2 Instance
-- Snapshots of encrypted volumes and volumes restored from encrypted snapshots are encrypted automatically
-- You can share un-encrypted snapshots, these snapshots can be shared with other AWS accounts or made public
-- Instance Store Volumes are sometimes called Ephemeral Storage
-- Instance Store Volumes cannot be stopped. If the underlying host fails, you will LOSE your data.
-- EBS backed instances can be stopped. You will NOT LOSE teh data on this instance if it is stopped
-- You can reboot both, you will not lose data
-- By default, both ROOT volumes will be deleted on termination. However, with EBS volumes, you can tell AWS to keep the root device volume
-
-To encrypt an un-encrypted root device volume:
-
-- create a snapshot of the un-encrypted root device volume
-- create a copy of the snapshot and select teh encrypt opinion
-- create an AMI from teh encrypted snapshot
-- use that AMI to launch new encrypted instances
-
+| Type                   | Description                                                                                                                                                            |
+|------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| File Gateway (NFS)     | Files are stored as objects in your S3 buckets, accessed throught a NFS mount point.                                                                                   |
+| Volume Gateway (iSCSI) | Same using virtual directories via iSCSI block protocol. Files are stored in the cloud as Amazon EBS snapshots. Two types: (1) Stored volumnes and (2) Cached volumes. |
+| Type Gateway (VTL)     | It offers durable, cost-effective solution to archive your data in the AWS Cloud (same mecanism as Volume Gateway).                                                    |

@@ -1,161 +1,174 @@
 ---
 id: chapter06
-title: Virtual Private Cloud
-sidebar_label: VPC
+title: Route53
+sidebar_label: Route53
 ---
 
-# Virtual Private Cloud (VPC)
+# Route53 - DNS Server
 
-![Virtual Private Cloud](https://sgitario.github.io/images/aws-vpn-1.png)
+Route53 is a Managed DNS (Domain Name System), where DNS is a collection of rules and records which helps clients understand how to reach a server through URLs
 
-> image source: https://sgitario.github.io/aws-certified-solutions-architect-summary/
+In AWS, the most common records are
 
+- A: URL to IPv4
+- AAAA: URL to IPv6
+- CNAME: URl to URL
+- ALias: URL to AWS resource
 
-VPC lets us provision a **logically isolated** section of our infrastructure where we can launch AWS resources in a virtual network that we define. We have complete control over:
+## 1. DNS Records
 
-- our virtual networking environment, including selection of our own IP address range, creation of subnets
-- configuration of route tables
-- network gateways
+| Record Type | Description                 |
+|-------------|-----------------------------|
+| A           | Host Address                |
+| AAAA        | IPv6 host address           |
+| ALIAS       | Auto resolved alias         |
+| CNAME       | Canonical name for an alias |
+| MX          | Mail eXchange               |
+| NS          | Name Server                 |
+| PTR         | Pointer                     |
+| SOA         | Start Of Authority          |
+| SRV         | Location of service         |
+| TXT         | Descriptive text            |
 
-Additionally, we can create a hardware VPN connection between our corporate datacenter and our VPC and leverage the AWS cloud as an extension of our corporative datacenter.Default 
-
-## VPC vs Custom VPC
-
-- Default VPC
-  - user friendly, allowing you to immediately deploy instances.
-  - All Subnets in default VPC have a route out to the internet.
-  - Each EC2 instance has both a public and private IP address.
-
-
-## VPC Peering (VPC <–> VPC)
-
-- Allows you to connect one VPC with another via a **direct network route** using private IP addresses
-- Instances behave as if they were on the same private network
-- We can peer VPC's with other AWS accounts as well as with other VPCs in the same account
-
-Peering is a star configuration: 1 central VPC peers with 4 others
+note: Elastic Load Balancers do not have pre-defined IPv4 addresses, you resolve to them using a DNS name.
 
 :::important
 
-NO transitive peering
+What is TTL (Time-to-Live) ?
 
-> reference: https://docs.aws.amazon.com/vpc/latest/peering/invalid-peering-configurations.html#transitive-peering
+It is the length that a **DNS record** is cached on
 
-> You have a VPC peering connection between VPC A and VPC B (pcx-aaaabbbb), and between VPC A and VPC C (pcx-aaaacccc). There is no VPC peering connection between VPC B and VPC C. You cannot route packets directly from VPC B to VPC C through VPC A.
->
-> To route packets directly between VPC B and VPC C, you can create a separate VPC peering connection between them (provided they do not have overlapping CIDR blocks). For more information, see Three VPCs peered together.
+1. Resolving Server
+2. User's local PC
 
-![transitive peering](https://docs.aws.amazon.com/vpc/latest/peering/images/transitive-peering-diagram.png)
+in *seconds*
 
 :::
 
 
-## How-To
+### 1.1 Start of Authority Record (SOA)
 
-1. Go To VPC service > Your VPCs > Create VPC
-2. Fill IPv4 CIDR block and tenancy and click on create.
+SOA Records contains information about:
 
-No subnets and internet gateways have been created at this moment. Route table, network ACLs and security groups have been created. Security groups can't span VPCs.
-
-1. Go to Subnets -> Create subnet
-2. Name it, select our VPC, the availability zone and the IPv4 CIDR block. Finally, click on create.
-
-By default, no subnet has public IP. In order to do this, select the subnet and click on actions and make it auto apply public IP. Amazon always reserve 5 IP addresses with your subnets.
-
-1. Go to Internet Gateways -> Create internet gateway
-2. Name it and click on create.
-3. Select it and with actions, attach the internet gateway to the VPC. (Only ONLY VPC can be attached to ONE internet gateway)
-
-At the moment, all our VPC are public because our routes allow it. Let's fix this:
-
-1. Go to Route Tables -> select our route table and select “Routes”
-2. Edit routes
-3. Fill destination (any IP) with target internet gateway
-4. Go to Subnet Associations
-5. Edit subnet associations in order to select the subnet that needs to be public.
-
-Now, we can't ssh-access to our private ec2 instance from our public subnet.
-
-1. Go to EC2 > Security Groups -> Create Security Group
-2. Select our VPC, type “All ICMP” (protocol ICMP) and the source the public subnet.
-3. Select our VPC, type “SSH” and the source the private subnet.
-4. Change the security group of our ec2 instance.
+1. The name of the server that suplied the data
+2. the administrator of the zone
+3. The current version of the data file
+4. The default number of seconds for the  "time-to-live" (TTL) file on resource records
 
 
-## NAT Instances and NAT Gateways
+### 1.2 NS Record
+
+NS Record stands for **Name Server Record**
+
+The are used by top level domain servers -> direct traffic to Content DNS Server, which contains the authoritative DNS Records
 
 
-### NAT Instance
+### 1.3 A Record
 
-- When you try to create a NAT Instance, **disable the source/destination check** on the instance first
-- NAT instances must be in a **public subnet**.
-- There must be a route out of the private subnet to the NAT instance, in order for this to work.
-- The amount of traffict that NAT instances can support depends on the **instance size**. If you are bottlenecking, increase the instance size.
-- You can create **high availability** using autoscaling groups, multiple subnets in different AZs, and a script to automate failover.
-- It is behind the Security Group
+An "A Record" is a fundamental type of DNS Record
 
-### NAT Gateway
+**A** stands for **Address**
 
-- NAT Gateways are redundant inside the Availability Zone. **One NAT gateway per availability zone**.
-- Preferred by the enterprise.
-- Starts at 5Gbps and scales currently up to 45 Gbps. | **Scaled Automatically**
-- No need to patch
-- **Not associated with security groups**.
-- Automatically assigned a public IP address.
-- No needed to disable the source/destination check.
-- In order to have high availability, we should create a NAT gateway in each availability zone.
+A Record is used by computer to translate the name of the domain to an IP Address
 
 
+### 1.4 Alias Record and CName
 
-## Network Access Control Lists (ACL)
-
-This works like a security group for all(or any) subnets in your VPC. We can add allow/deny rules. The default VPC comes a default network ACL, and by default it allows all outbound and inbound traffic.
-
-When creating a custom network ACLs, by default denies all inbound and outbound traffic until you add rules. Each subnet in your VPC must be associated with a network ACL. If you don't explicitly associate a subnet with a network ACL, the subnet is automatically associated with the default network ACL.
-
-In order to block IP Addresses, we need to use ACLs, not security groups.
-
-- A network ACL can be associated to N subnets, but 1 subnet can only be associated to 1 ACL.
-- Network ACLs contain a numbered list of rules that is evaluated in order, starting with the lowest numbered rule.
-- Network ACLs have separate inbound and outbound rules, and each rule can either allow or deny traffic.
-- Network ACLs are stateless; responses to allowed inbound traffic are subject to the rules for outbound traffic and vice versa.
+- The **CNAME record** maps a URL to another URL. It should only be used when there are no other records on that name. Use a **CNAME** record if you want to alias one name to another name.
+  - eg. `app.mydomain.com -> xxx.newdomain.com`
+  - CNAME is only for NON ROOT DOMAIN -> `something.mydomain.com`
+- The **ALIAS record** maps a URL to a AWS Resource, but can co-exist with other records on that name. Use an **ALIAS record** if you're trying to alias the root domain (apex zone).
+  - Works for ROOT DOMAIN and NON ROOT DOMAIN, `mydomain.com`
+  - Free of charge, and native health checks
+  - Alias Record is used to map resource record sets in your hosted zone to Elastic Load Balancers / CloudFront Distributions / S3 Buckets
+    - it maps one DNS name to another target DNS name
 
 
-## VPC Flow Logs
+## 2. Routing Policies
 
-Flow Logs is a feature that enables you to capture information about the IP traffic going to and from network interfaces in your VPC. Flow log data is stored using Amazon CloudWatch Logs. After you've created a flow log, you can view and retrieve its data in Amazon CloudWatch Logs.
+:::info
 
-- There are three levels of abstraction:
-  - VPC
-  - subnet
-  - network access level.
-- You cannot enable flow logs for VPCs that are peered with your VPC unless the peer VPC is in your account.
-- You cannot tag a flow log.
-- After you've created a flow log, you cannot change its configuration; for example, you can't associate a different IAM role with the flow log.
-- Not ALL IP Traffic is monitored
-  - internal traffic done by AWS mostly
-    - traffic generated by instances when they contact the AWS DNS Server
-    - traffic generated by a windows instance
-    - DHCP traffic / reserved IP Address (five addresses I believe ?)
+References: https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-policy.html
+
+:::
+
+In summary:
+
+![](https://mk0digitalcloud3kwjy.kinstacdn.com/wp-content/uploads/2019/03/AWS-Route-53-Routing-Policies.jpg)
+
+### 2.1  Simple Routing Policy
+
+One record with **multiple IP addresses**. If you specify **multiple values in a record**, Route53 returns a random one which is chosen by the client
+
+Simple Routing Policy does not support health checks
+
+> If you choose the simple routing policy in the Route 53 console, you can't create multiple records that have the same name and type, but you can specify multiple values in the same record, such as multiple IP addresses. (If you choose the simple routing policy for an *alias record*, you can specify only one AWS resource or one record in the current hosted zone.) If you specify multiple values in a record, Route 53 returns all values to the recursive resolver in random order, and the resolver returns the values to the client (such as a web browser) that submitted the DNS query. The client then chooses a value and resubmits the query.
+
+### 2.2  Weighted Routing Policy
+
+![](https://d2908q01vomqb2.cloudfront.net/cb4e5208b4cd87268b208e49452ed6e89a68e0b8/2016/10/26/Upgrades_Image1.jpeg)
+
+Allows you split your traffic based on different weights assigned. For example, you can set 10% of your traffict to go to US-EAST-1 and 90% to EU-WEST-1.
+
+You can gradually change the balance by changing the weights. If you want to stop sending traffic to a resource, you can change the weight for that record to 0.
+
+### 2.3  Letancy Routing Policy
+
+Allows you to route your traffic based on the lowest network latency for your end user (ie which region will give them the fastest response time).
+
+To use latency-based routing, we need to create a latency resource record set for EC2 or ELB resource in each region that hosts your website.
+
+Latency-based routing is based on latency measurements performed *over a period of time*, and the measurements reflect these changes.
 
 
+> Latency is evaluated in terms of user to designated AWS Region
 
-### Bastion Hosts
+### 2.4  Failover Routing Policy
 
-- A Bastion is used to **securely** administer EC2 instances (using ssh or RDP).
-- We **cannot** use a NAT Gateway as a Bastion host.
+![](https://miro.medium.com/max/912/1*o76vPCV2AF0jeVVunVwYDA.png)
 
-### Direct Connect
+Failover routing lets you route traffic to a resource when the resource is healthy or to a different resource when the first resource is unhealthy.
 
-AWS Direct Connect is a cloud service solution that makes it easy to establish a dedicated network connection from your premises to AWS. Therefore, we can establish private connectivity between AWS and your datacenter, office, or colocation environment, which in many cases can reduce your network costs, increase bandwidth throughput and provide a more consistent network experience than Internet-based connections.
+This is used when you want to create an active/passive set up. For example, you may want your primary site to be in EU-WEST-2 and your secondary DR Site in AP-SOUTHEAST-2. Route53 will monitor the health or your primary site using health checks.
 
-### VPC Endpoint
+### 2.5  Geolocation Routing Policy
 
-An interface endpoint is an elastic network interface with a private IP address that serves as an entry point for traffic destined to a supported service.
+![](https://intellipaat.com/blog/wp-content/uploads/2019/05/r5.png)
 
-A VPC endpoint enables you to privately connect your VPC to supported AWS services and VPC endpoint services powered by PrivateLink without requiring an internet gateway, NAT device, VPN connection or AWS Direct Connection. Instances in your VPC do not require public IP addresses to communicate with resources in the service. Traffic between your VPC and the other service does not have the Amazon network.
+Geolocation works by mapping IP addresses to locations. However, some IP addresses aren't mapped to geographic locations, so even if you create geolocation records that cover all seven continents, Amazon Route 53 will receive some DNS queries from locations that it can't identify. You can create a **default** record that handles both queries from IP addresses that aren't mapped to any location and queries that come from locations that you haven't created geolocation records for.
 
-Endpoints are virtual devices. They are horizontally scaled, redundant, and highly available VPC components that allow communication between instances in your VPC and services without imposing availability risks or bandwidth constrains on your network traffic.
+**If you don't create a default record, Route 53 returns a "no answer" response for queries from those locations.**
 
-- There are two types: interface and gateway
-- Currently, gateway endpoints support S3 and DynamoDB
+### 2.6  Geoproximity Routing Policy (Traffict Flow Only)
+
+Geoproximity routing lets Route53 route traffic to your resources based on the geographic location of your users and your resources. You can also optionally choose to route more traffic or less to a given resource by specifying a value, known as a bias. A bias expands or shrinks the size of the geographic region from which traffic ir routed to a resource.
+
+### 2.7  Multivalue Answer Policy
+
+- use when routing traffic to multiple resources
+- want to associate a Route53 health checks with records
+- up to 8 healthy records are returned for each multi-value query
+- **not a substitution for having an ELB**
+
+It lets you configure Route53 to return multiple values, such as IP addresses for your web servers, in response to DNS queries. You can specify multiple values for almost any record, but multivalue answer routing also lets you check the health of each resource, so Route53 returns only values for healthy resources.
+
+Similar to simple routing but with **health checks** on each record set
+
+
+## Route53 as a Registrar (*)
+
+A domain name registrat is an organization that manages the reservation fo Internet domain names
+
+Route53, GoDaddy, Google Domains ...
+
+> Domain Registrar != DNS
+
+
+:::note
+
+If you buy your domain on 3rd party website, you can still use Route53
+
+1. Create a Hosted Zone in Route53
+2. Update NS Records on 3rd party website to use Route53 **name servers**
+
+:::
