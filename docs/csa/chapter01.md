@@ -1,7 +1,7 @@
 ---
 id: chapter01
-title: IAM and S3
-sidebar_label: IAM and S3
+title: IAM
+sidebar_label: IAM
 ---
 
 ## Identity Access Management (IAM)
