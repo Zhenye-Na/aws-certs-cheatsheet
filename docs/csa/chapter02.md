@@ -1,6 +1,6 @@
 ---
 id: chapter02
-title: S3
+title: S3 (Basic and Advanced)
 sidebar_label: S3
 ---
 
@@ -63,10 +63,26 @@ There are several classes for S3 storage
 |------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------|
 | S3 Standard                                    | This tier provides `99.99%` availability and `99.999999999%` durability (there are 11 `9`s LOL)                                    |
 | S3 - IA (Infrequently Accessed)                | Data that is accessed less frequently, but requires rapid access.  Lower fee than S3 - Standard. but it charge for a retrieval fee |
-| S3 One Zone - IA   (Reduce Redundancy Storage) | This does not require multiple availability zone data resilience                                                                   |
+| S3 One Zone - IA                               | This does not require multiple availability zone data resilience                                                                   |
 | S3 - Intelligent Tiering                       | This tier utilizes Machine Learning                                                                                                |
 | S3 - Glacier                                   | For data archive                                                                                                                   |
 | S3 - Glacier Deep Archive                      | Slowest, cheapest. File retrieval time ~ 12 hours                                                                                  |
+
+
+#### Glacier & Glacier Deep Archive
+
+Glacier has 3 options to retrieve objects
+
+1. Expedited: 1 ~ 5 minutes
+2. Standard: 3 ~ 5 hours
+3. Bulk: 5 ~ 12 hours
+4. Minimum storage duration of 90 days
+
+Glacier Deep Archive - for long term storage, cheaper even
+
+1. Standard: 12 hours
+2. Bulk: 48 hours
+3. Minimum storage duration of 180 days
 
 
 ### S3 Security
@@ -240,10 +256,31 @@ S3 uses lifecycle rules to manage objects
 2. It can be used in conjection with versioning
 3. It can be applied to current versions and previous versions
 
+#### S3 Lifecycle Rules
+
+There are two types of actions in S3 Lifecycle Rules
+
+- **Transition actions**: it defines when objects are transitioned to another storage class
+  - move object to Standard IA class 60 days after creation
+  - move to glacier for crchiving after 6 months
+- Expiration actions: it configures objects to expire / delete after some time
+  - access log files can be set to delete after 365 days
+  - delete old version files
+  - delete incompleted multi-part uploads
+
+
+
+The rules can be applied for a certain prefix (`s3://<bucket_name>/mp3/*`) or certain objects tags
+
+
 
 ### Cross Region Replication in S3
 
-Cross Region Replication in S3 requires **enabling versioning**
+Cross Region Replication in S3 requires **enabling versioning** for both <u>source</u> bucket and <u>destination</u> bucket
+
+![](https://www.groupwaretech.com/wp-content/uploads/2018/12/Cross-Region-Replication_001-e1546045801558.png)
+
+The buckets (source and destination) must be in different AWS Regions. It can cross different accounts. The copy is async.
 
 Keypoints of Cross Region Replication:
 
@@ -251,49 +288,212 @@ Keypoints of Cross Region Replication:
 - the files already in the source bucket will not be replicated automatically
 
 
-:::tip
+
+:::note
 
 1. Versioning should be enabled both in source and destination bucket
 2. Regions must be unique (LOL)
 3. Files in an existing bucket are not replicated automatically
-4. Delete markers are not replicated
+4. Delete markers are **not** replicated
 5. Delete individual versions / delete markers will not be replicated
 
 :::
 
+## S3 MFA-Delete
 
-### S3 Transfer Acceleration
+MFA forces user to generate a code on a device (usually a mobile phone or hardware) before doing important operations on S3
+
+
+
+In order to use MFA-Delete feature, you need to enale **Versioning** on the S3 bucket, later, you will need MFA to:
+
+- permanently delete an object version
+- suspend Versioning on the bucket
+
+
+
+**Only the bukcet owner (root account) can enable/disable MFA-Delete feature, and it currently can only be enabled using CLI**
+
+
+
+## S3 Access Logs
+
+You can log all access to S3 buckets, any <u>requests</u> made to S3, from any accounts, whatever authorized or denied, will be logged into <u>another S3 bucket</u> (two S3 buckets here, one is the bucket we wanna monitor the requests, and another is the bucket where logs are stored in)
+
+
+
+We can use <u>Athena</u> to analyze the logs
+
+## S3 Pre-signed Urls
+
+S3 Pre-signed Urls can be generated via SDK or CLI
+
+- downloading: we can use CLI
+- uploading: we **must** use SDK
+
+
+
+```sh
+# set signature version, for files are encrypted, otherwise you will have issues
+$ aws configure set default.s3.signature_version s3v4
+
+# create a pre-signed url which lasts for 5 minutes. don't forget to add region in the command
+# --expires-in option default value is 3600 seconds
+$ aws s3 presign s3://<bucket_name>/<filename> --expires-in 300 --region us-east-1a
+```
+
+
+
+:::important
+
+Users given a pre-signed url will inherit the permissions of the person who generated the url for `GET` / `PUT`
+
+:::
+
+
+
+Example usage case:
+
+- only logged-in user can download a premium video on your S3 bucket
+- allow an ever changing list of users to download files by generating URLs dynamically
+
+
+
+## S3 Performance Baseline
+
+at least
+
+- 3500 PUT / COPY / POST / DELETE
+- 5500 GET / HEAD
+
+requests per second <u>per prefix</u> in a bucket, there are no limits to the number of prefixes in a bucket
+
+
+
+:::note
+
+what is a prefix ?
+
+suppose you have a file with full path like this:
+
+```
+<bukcet_name>/folder1/sub1/file
+```
+
+then the prefix will be `/folder1/sub1/`
+
+:::
+
+if you spread reads across all four prefixes evenly, you can achieve 22000 requests per second for GET and HEAD
+
+
+
+### S3 - KMS Limitation
+
+If you use SSE-KMS, then you may be impacted by the KMS limits, since
+
+- when you upload a file, it will call the `GenerateDataKey` API during the call to KMS API
+- when you download a SSE-KMS encrypted file, it will cal the `Decrypt` KMS API
+
+since API calls will have a upper bound, then your performance with S3 will be impacted
+
+
+
+### Improve S3 Performance
+
+#### Multi-part upload
+
+Multipart upload is a three-step process: You initiate the upload, you upload the object parts, and after you have uploaded all the parts, you complete the multipart upload. Upon receiving the complete multipart upload request, Amazon S3 constructs the object from the uploaded parts, and you can then access the object just as you would any other object in your bucket.
+
+![](https://media.amazonwebservices.com/blog/s3_multipart_upload.png)
+
+
+
+#### S3 Transfer Acceleration (upload only)
 
 This utilizes the **CloudFront Edge Networks** to accelerate your uploads to S3. Instead of uploading directly to your S3 bucket, you can use a distinct url to *upload directly to an Edge Location*, which will *then transfer to S3* using Amazon Backbone Network
 
+This is compatible with multi-part upload
 
-#### Amazon CloudFront
+![](https://miro.medium.com/max/624/1*lHrgv1gFEXqNhtnpCVXH9A.png)
 
-CloudFront is a Contetnt Delievery Network (CDN), which is:
+
+
+#### S3 Performance - S3 Byte-Range Fetches
+
+Parallelize `GET`'s by requesting specific byte ranges, better resilience in case of failures
+
+You can fetch a byte-range from an object, transferring only the specified portion.
+
+Typical sizes for byte-range requests are 8 MB or 16 MB. If objects are PUT using a multipart upload, it's a good practice to `GET` them in the same part sizes (or at least aligned to part boundaries) for best performance. `GET` requests can directly address individual parts; for example, `GET ?partNumber=N`.
+
+
+
+## S3 Select & Glacier Select
+
+With usage of S3 Select or Glacier Select, you can retrieve less data using SQL by performing **server side filtering**, which can be filter by row / columnes.
+
+![](https://d2908q01vomqb2.cloudfront.net/da4b9237bacccdf19c0760cab7aec4a8359010b0/2017/11/28/s3_select.png)
+
+
+## S3 Object Lock & Flacier Vault Lock
+
+| S3 Object Lock                                                 | Glacier Vault Lock                                           |
+|----------------------------------------------------------------|--------------------------------------------------------------|
+| Adopt a WORM (Write-once, Read-many) model                     | Adopt a WORM (Write-once, Read-many) model                   |
+| Block an object version deletion for a specific amount of time | Local the policy for future edits (can no longer be changed) |
+|                                                                | Helpful for compliance and data retention                    |
+
+
+## AWS Athena
+
+- Athena is a Serverless service to perform analytics directly against S3 files.
+- We can use SQL to do queries, it also has JDBC / ODBC driver
+- It charged per query and amount of data scanned
+
+:::tip
+
+in the exam, if it asks to "analyze data directly on S3", we should use Athena
+
+:::
+
+
+## Amazon CloudFront
+
+CloudFront is a Content Delievery Network (CDN), which is:
 
 a system of **distributed** servers / network that deliever webpages and other web content to a **user based on the geographic locations** of the user, origin of the webpage and a CDN.
 
-##### Key Terminology of CloudFront
+- it improves read performance, content is cached at Edge Locations
+- it has DDoS protention, integration with AWS Shield
 
-**Edge Location**
+### Key Terminology of CloudFront
+
+#### Edge Location
 
 This is the location where content will be cached, and separate to the AWS Region / AZ.
 
-**Origin**
+#### Origin
 
-This is the origin of  all the files that the CDN will distribute. This can be an
+This is the origin ofall the files that the CDN will distribute. This can be an
 
 1. S3 Bucket
-2. EC2 Instance
-3. Elastic Load Balancer
+   1. for distributing files and caching them at the edge locations
+   2. enhanced security with CloudFront Origin Access Identity (OAI)
+   3. CloudFront can be used as an ingress (to upload files to S3)
+2. S3 Website
+   1. must first enable the bucket as a **static S3 website**
+3. Cutom Origin (HHTP) - must be publicly accessible
+   1. EC2 Instance
+   2. Elastic Load Balancer
 4. Route53
 
 
-**Distribution**
+#### Distribution
 
 This is the name given the CDN which consists of *a collection of Edge Locations*
 
-There are two types of Distribution
+There are two types of distribution
 
 1. Web Distribution: for website
 2. RTMP: for Media Streaming
@@ -301,7 +501,7 @@ There are two types of Distribution
 
 :::tip
 
-1. Edge Location are not just READ only - you can also write to it, since files are cached here
+1. Edge Location are not just `READ` only - you can also write to it, since files are cached here
 2. Objects are cached for the life of the TTL (Time To Live)
 3. You can *clear cached objects* (Invalidate the cache), but you will be charged
 4. CloudFront also supports "Restrict Viewer Access", like contents can only be viewed by "paid" users. using "Signed Urls"
@@ -309,52 +509,55 @@ There are two types of Distribution
 :::
 
 
-### Snowball and Storage Gateway
+### CloudFront Signed URL & Signed Cookies
 
-Briefly speaking:
+![](/img/cloudfront-signed-urls-diagram.png)
 
-1. Snowball is an equipment, moving large amounts of data into the AWS Cloud. It supports:
-   1. Import to S3
-   2. Export to S3
-2. Storage Gateway is a service enabling you to securely store data to the AWS Cloud for scalable and cost-effective storage
+It will be suitable if you want to distribute paid shared content to premium users over the world, with CloudFront Signed URL / Cookie, we attach a policy with:
 
-#### Storage Gateway
+- URL expiration
+- IP ranges to be allowed to access the data
+- trusted signers - which AWS account can create signed urls
 
-Basically there are three types of Storage Gateway:
+How long should the URL be valid for ?
 
-1. File Gateway
-2. Volume Gateway
-   1. Stored Volumes
-   2. Cached Volumes
-3. Tape Gateway Virtual Tape Library (VTL)
+- shared content (movie & music): make it short
+- private content (private to users): you can make it last for years
 
-**File Gateway**
+> Signed URL : access to individual files (one signed URL per file)
+> 
+> Signed Cookies : access to multiple files (one signed cookie for many files)
 
-Files are stored as objects in your S3 Buckets, accessed through a Network File System (NFS) mounting point
+:::important
 
-**Volume Gateway**
+CloudFront Signed URL vs S3 Pre-Signed URL
 
-1. The Volume Gateway presents your application with disk volumes using the iSCSI block protocol
-2. Asychronously back up as point-in-time snapshots, the snapshots are stored in the cloud as Amazon EBS Snapshots
-3. Snapshots are incremental backups that capture only changed blocks, but compressed to minimized charges
+| CloudFront Signed URL                                        | S3 Pre-Signed URL                                    |
+|--------------------------------------------------------------|------------------------------------------------------|
+| allow access to a path, no matter the origin                 | issue a request as the person who pre-signed the URL |
+| acocount wide key-pair, but only the root user can manage it | use teh IAM key of the signing IAM principal         |
+| can be filtered by IP, path, date, expiration                | Limited lifetime                                     |
+| can leverage caching features                                |                                                      |
+| ![](/img/cloudfront-signed-urls.png)                         | ![](/img/s3-pre-signed-urls.png)                     |
 
-=> Storing Virtual Hard Disk Drive in the Cloud
-
-Let's summarize the differences between **Stored Volumes** and **Cached Volumes**
-
-For **Stored Volumes**:
-
-1. Entire Dataset stored on site
-2. Asynchronously backed up to S3
-
-For **Cached Volumes**:
-
-1. Entire Dataset is stored on S3
-2. Most Frequently Accessed data are cached on site
+:::
 
 
-| Type                   | Description                                                                                                                                                            |
-|------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| File Gateway (NFS)     | Files are stored as objects in your S3 buckets, accessed throught a NFS mount point.                                                                                   |
-| Volume Gateway (iSCSI) | Same using virtual directories via iSCSI block protocol. Files are stored in the cloud as Amazon EBS snapshots. Two types: (1) Stored volumnes and (2) Cached volumes. |
-| Type Gateway (VTL)     | It offers durable, cost-effective solution to archive your data in the AWS Cloud (same mecanism as Volume Gateway).                                                    |
+### CoudFront Geo Restriction
+
+- You can restrict who can access your distribution
+  - Allowlist: allow your users to access your content only if they are in one of the areas on a list of approved area
+  - Blocklist: Prevent your users from accessing your content if they are in ....
+
+This can be a good use case when copyright laws to control access to content
+
+
+### CloudFront vs S3 cross Region Replication
+
+| CloudFront                                                 | S3 Cross Region Replication                                                        |
+|------------------------------------------------------------|------------------------------------------------------------------------------------|
+| Global Edge Network                                        | must be setup for each Region you want replication to happen                       |
+| Files are cached for a TTL (maybe a day)                   | Files are updated in near real-time                                                |
+| Great for static content that myst be available everywhere | Read Only                                                                          |
+|                                                            | Great for dynamic content that needs to be available at low-latency in few regions |
+
