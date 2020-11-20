@@ -561,3 +561,62 @@ This can be a good use case when copyright laws to control access to content
 | Great for static content that myst be available everywhere | Read Only                                                                          |
 |                                                            | Great for dynamic content that needs to be available at low-latency in few regions |
 
+
+### AWS Global Accelerator
+
+This utilizes the AWS internal network to route to your application. there will be **2 Anycast IPs** created for your app
+
+the traffic flwo will be:
+
+```
+Anycast IP -> Edge Location -> Your application
+```
+
+
+:::info
+
+What is Unicast IP and Anycast IP ?
+
+Unicast IP: one server holds one IP address
+
+Anycast IP: all servers hold the same IP address and the client is routed to the nearest one
+
+:::
+
+
+AWS Global Accelerator works with Elastic IP, EC2 Instances, ALB, NLB (puclic or private one)
+
+It has:
+
+- **Consistent Performance**
+  - Intelligent routing to lowest latency and fast regional failover
+  - No issue with client cache (IP dont change)
+  - Internal AWS Network - fast
+- **Health Checks**
+  - Global Accelerator performas a health check of you applications
+  - helps make the app global (failover less than 1 minute for unhealthy)
+  - disaster recovery
+- **Security**
+  - only 2 external IP need to be allowlisted
+  - DDoS protection <- AWS Shield
+
+
+### AWS Global Accelerator vs CloudFront
+
+They both user AWS global network and edge location to accelerate, also they both integrate with AWS Shield for DDoS Protection
+
+However,
+
+**CloudFront**
+
+- improves performance for cacheable content (such as images and videos)
+- dynamic content (such as API acceleration and dynamic site delievery)
+- content is served at the edge location
+
+
+**Global Accelerate**
+
+- improves performance for a wide range of applications over TCP or UDP
+- proxying packets at the edge location to applications running in one or more AWS Regions
+- good fit for non-HTTP use cases
+- HTTP cases: which requires static IP addresses, or deterministic, fast regional failover
