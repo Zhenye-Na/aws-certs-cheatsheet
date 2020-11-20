@@ -1,10 +1,10 @@
 ---
 id: chapter04
-title: EC2 Storage - EBS & EFS
-sidebar_label: EBS & EFS
+title: EBS, EFS and Storage Gateway
+sidebar_label: EBS, EFS and Storage Gateway
 ---
 
-# EC2 Storage - EBS & EFS
+# EBS, EFS and Storage Gateway
 
 ## EBS Volume
 
@@ -277,4 +277,149 @@ references of comparing EBS with EFS:
 
 - https://medium.com/awesome-cloud/aws-difference-between-efs-and-ebs-8c0d72a348ad
 
+
+## Snowball
+
+Briefly speaking:
+
+1. Snowball is an equipment, moving large amounts of data into the AWS Cloud. It supports:
+   1. Import to S3
+   2. Export to S3
+2. Storage Gateway is a service enabling you to securely store data to the AWS Cloud for scalable and cost-effective storage
+
+:::info
+Snowball Edge
+
+Snowball Edge adds computational capability to the device, it supports a custom EC2 AMI so you can performance processing on the go
+
+:::
+
+## Storage Gateway
+
+> Hybrid Cloud for Storage
+> 
+> part of the infrastructure is on the cloud, part is on-premise
+
+Bridge between on-premise data and cloud data in S3, typical use cases are disaster recovery, backup & restore and tiered storage
+
+![](https://docs.amazonaws.cn/en_us/storagegateway/latest/userguide/images/file-gateway-concepts-diagram.png)
+
+Basically there are three types of Storage Gateway:
+
+1. File Gateway
+2. Volume Gateway
+  1. Stored Volumes
+  2. Cached Volumes
+3. Tape Gateway Virtual Tape Library (VTL)
+
+### File Gateway
+
+- configured S3 bukets are accessible using the `NFS` and `SMB` protocol
+- supports S3 standard, S3 IA, S3 One Zone IA
+- bukcet access using IAM roles for each File Gateway
+- most recently used data is cached in the file gateway
+- this can be mounted on many servers
+
+![](https://d1.awsstatic.com/cloud-storage/File-Gateway-How-it-Works.6a5ce3c54688864e5b951df9cb8732fc4f2926b4.png)
+
+> Files are stored as objects in your S3 Buckets, accessed through a Network File System (NFS) mounting point
+
+### Volume Gateway
+
+1. The Volume Gateway presents your application with disk volumes using the iSCSI block protocol, backed by S3
+2. Asychronously back up as point-in-time snapshots, the snapshots are stored in the cloud as **Amazon EBS Snapshots**
+3. Snapshots are *incremental backups* that capture only *changed* blocks, but compressed to minimized charges
+
+=> Storing Virtual Hard Disk Drive in the Cloud
+
+Let's summarize the differences between **Stored Volumes** and **Cached Volumes**
+
+For **Stored Volumes**:
+
+1. Entire Dataset stored on site
+2. Asynchronously scheduled backed up to S3
+
+For **Cached Volumes**:
+
+1. Entire Dataset is stored on S3
+2. Most Frequently Accessed data are cached on site (low latency access to most recently used data)
+
+![](https://d1.awsstatic.com/cloud-storage/volume-gateway-diagram.eedd58ab3fb8a5dcae088622b5c1595dac21a04b.png)
+
+
+
+### Tape Gateway
+
+- Physical tapes for backup process, for example
+- Virtual Tape Library (VTL) backed by S3 and Glacier
+- Back up data using existing tape-based processes (and iSCSI interface)
+- Works with leading backup software vendors
+
+![](https://d1.awsstatic.com/cloud-storage/tape-gateway-diagram.4b6ca2b4e3f97d4df7988544400ae91424503248.png)
+
+
+
+### Storage Gateway Summary
+
+Exam Tip:
+
+if the question is asking `"On-premise data to the cloud"`, we definitely want `Storage Gateway`
+
+- File Access / NFS -> File Gateway, backed by S3
+- Volumes / Block Storage / iSCSI -> Volume Gateway, backed by S3 with EBS Snapshots
+- VTL Tape solution / Backup with iSCSI -> Tape Gateway, backed by S3 and Glacier
+
+
+| Type                   | Description                                                                                                                                                            |
+|------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| File Gateway (NFS)     | Files are stored as objects in your S3 buckets, accessed throught a NFS mount point.                                                                                   |
+| Volume Gateway (iSCSI) | Same using virtual directories via iSCSI block protocol. Files are stored in the cloud as Amazon EBS snapshots. Two types: (1) Stored volumnes and (2) Cached volumes. |
+| Type Gateway (VTL)     | It offers durable, cost-effective solution to archive your data in the AWS Cloud (same mecanism as Volume Gateway).                                                    |
+
+
+## Amazon FSx
+
+### Amazon FSx for Windows
+
+> EFS is a shared POSIX system for Linux systems, not suitable for Windows machine
+
+Amazon FSx for Windows is a fully managed Windows file system share drive
+
+- support SMB protocol and Windows NTFS
+- MicroSoft Active Directory integration, ACLs, user quotas
+- it is build on SSD, high IOPS, high Throughput
+- can be accessed from you on-premise infrastructure
+- can be configured tp be Multi-AZ (High Availability)
+- Data is backed-up daily to S3
+
+
+### Amazon FSx for Lustre
+
+Amazon FSx for Lustre is type of parallel distributed file system, for large-scale computing
+
+> Machine Learning, **High Performance Computing** (HPC), Video Processing, Financial Modeling, Electronic Design Automation
+
+Seamless integration with S3:
+
+- it can read S3 as a file system (through FSx)
+- it can write teh output of the computations back to S3 (through FSx)
+
+It can be used from on-premise servers
+
+
+
+## Storage Comparison
+
+| Storage Type          | Note                                                        |
+|-----------------------|-------------------------------------------------------------|
+| S3                    | Object Storage                                              |
+| Glacier               | Object Archival                                             |
+| EFS                   | Network File System for Linux instances                     |
+| FSx for Windows       | Network File System for Windows                             |
+| FSx for Lustre        | High Performance Computing                                  |
+| EBS volumes           | Network storage for one EC2 instance at a time              |
+| Instance Storage      | Physical storage for your EC2 instance (high IOPS)          |
+| Storage Gateway       | File Gateway; Volume Gateway (cache & stored); Tape Gateway |
+| Snowball / Snowmobile | move large amount of data to cloud, physically              |
+| Database              | specific workloads, usually with indexing and querying      |
 
