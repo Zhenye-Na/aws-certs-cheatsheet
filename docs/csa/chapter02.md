@@ -511,7 +511,7 @@ There are two types of distribution
 
 ### CloudFront Signed URL & Signed Cookies
 
-![](/img/cloudfront-signed-urls-diagram.png)
+![](https://raw.githubusercontent.com/Zhenye-Na/img-hosting-picgo/master/img/cloudfront-signed-urls-diagram.png)
 
 It will be suitable if you want to distribute paid shared content to premium users over the world, with CloudFront Signed URL / Cookie, we attach a policy with:
 
@@ -538,7 +538,7 @@ CloudFront Signed URL vs S3 Pre-Signed URL
 | acocount wide key-pair, but only the root user can manage it | use teh IAM key of the signing IAM principal         |
 | can be filtered by IP, path, date, expiration                | Limited lifetime                                     |
 | can leverage caching features                                |                                                      |
-| ![](/img/cloudfront-signed-urls.png)                         | ![](/img/s3-pre-signed-urls.png)                     |
+| ![](https://raw.githubusercontent.com/Zhenye-Na/img-hosting-picgo/master/img/cloudfront-signed-urls.png)                         | ![](https://raw.githubusercontent.com/Zhenye-Na/img-hosting-picgo/master/img/s3-pre-signed-urls.png)                     |
 
 :::
 

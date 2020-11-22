@@ -96,7 +96,7 @@ EC2 <-> Security Group <-> WWW
 
 #### Referencing other Security Groups
 
-![](/img/sg-referencing.png)
+![](https://raw.githubusercontent.com/Zhenye-Na/img-hosting-picgo/master/img/sg-referencing.png)
 
 > Since SG3 is not in the Inbound Rules of EC2 ①, so the EC2 with SG3 is not allowed to connect to EC2 ①
 

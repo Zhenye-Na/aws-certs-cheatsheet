@@ -201,7 +201,7 @@ the goal fo an ASG is to:
 2. Ensure minimum / maximum number of running instances
 3. automatically register new instances to a load balancer
 
-![](/img/asg.png)
+![](https://raw.githubusercontent.com/Zhenye-Na/img-hosting-picgo/master/img/asg.png)
 
 ### Scaling Policies
 

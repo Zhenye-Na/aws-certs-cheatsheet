@@ -242,7 +242,7 @@ In order to migrate data from MySQL to Aurora, you can do the following things
 
 ### Aurora DB Cluster
 
-![](/img/aurora-db-cluster.png)
+![](https://raw.githubusercontent.com/Zhenye-Na/img-hosting-picgo/master/img/aurora-db-cluster.png)
 
 > load balancing happens during connection
 
@@ -292,7 +292,7 @@ This is the AWS solution to web-service-based in-memory cache
 
 #### User Session Store
 
-![](/img/user-session-store.svg)
+![](https://raw.githubusercontent.com/Zhenye-Na/img-hosting-picgo/master/img/user-session-store.svg)
 
 - User log into any of the application
 - The application writes the session data into ElastiCache

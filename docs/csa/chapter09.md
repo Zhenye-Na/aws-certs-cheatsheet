@@ -93,7 +93,7 @@ Long Polling can be enabled at the queue level or at teh API level using `WaitTi
 
 ### SQS Messages Diagram
 
-![](/img/sqs.svg)
+![](https://raw.githubusercontent.com/Zhenye-Na/img-hosting-picgo/master/img/sqs.svg)
 
 
 
