@@ -4,32 +4,104 @@ title: AWS Applications
 sidebar_label: AWS Applications
 ---
 
-# AWS Applications
+2 types/patterns of application communication
+
+- synchronous communications
+- asynchronous / event based (job queue)
+
+Synchronous between applications could be problemetic if there are sudden spikes of traffic (suppose, Black Friday), in this case, we can **decouple** your application by using:
+
+- SQS: queue model
+- SNS: pub/sub model
+- Kinesis: real-time streaming model
+
+
 
 ## SQS: Distributed Queue System
 
-The Queue acts as a buffer between the component producing and saving data
+The Queue acts as a buffer between the component *producing* and *saving* data, and the component receiving the data for processing.
+
+![](https://d2908q01vomqb2.cloudfront.net/0716d9708d321ffb6a00818614779e779925365c/2017/03/28/Diagram2.png)
 
 > It's a web service that gives you access to a message queue that can be used to store messages while waiting for a computer to process them. Amazon SQS is a distributed queue system that enables web service applications to quickly and reliably queue messages that one component in the application generates to be consumed by another component. A queue is a temporary repository for messages that are awaiting processing.
 > 
-> Using Amazon SQS, you can decouple the components of an application so they run independendly, easing message management between components. Any component of a distributed application can store messages in a fail-safe queue. Messages can obtain up to 256 KB of text in any format. Any component can later retrieve the messages programmatically using the Amazon SQS API.
+> Using Amazon SQS, you can decouple the components of an application so they run independently, easing message management between components. Any component of a distributed application can store messages in a fail-safe queue. Messages can obtain up to 256 KB of text in any format. Any component can later retrieve the messages programmatically using the Amazon SQS API.
 > 
 > The queue acts as a buffer between the component producing and saving data, and the component receiving the data for processing. This means the queue resolves issues that arise if the producer is producing work faster than the consumer can process it, or if the producer or consumer are only intermittently connected to the network.
 
-There are two types of queues:
+Types of queues in SQS:
 
-1. Standard Queues (default): nearly-unlimited number of ttransactions per second. Guarantee that a message is delivered at least once (or more!).
-2. FIFO Queues: delivery and exactly-once processing. The order in which messages are sent and received is stringly preserved. It supports message groups.
+1. **Standard Queues** (default): nearly-unlimited number of transactions per second. guarantee that a message is delivered *at least once* (or more - can have duplicate messages).
+   1. **Delay Queues**: it can delay a message up to 15 mins, the default is 0, this can be overwritten using the `DelaySeconds` parameter
+2. **FIFO Queues**: delivery and exactly-once processing. The order in which messages are sent and received is strictly preserved. It supports message groups.
 
-Messages can be kept in the queue from 1 min to 14 days, the default retention period is 4 days. If a consumer does not handle the message in a Visiblity Time Out window (the max value is 12 hours), the message will became available again to be available for another consumer.
+Messages can be kept in the queue from 1 min to 14 days, the default retention period is 4 days. If a consumer does not handle the message in a `Visiblity Time Out` window (the max value is 12 hours), **the message will became available again to be available for another consumer**.
 
 SQS supports long polling as a way to retrieve messages when they are available rather than being short polling every some time.
 
-:::tip
 
-1. SQS is pull-based
+### Producing and Consuming Messages
+
+| Producing                                    | Consuming                                                 |
+|----------------------------------------------|-----------------------------------------------------------|
+| Define message body (up to 256 KB)           | **Pull** SQS for message (up to 10 messages at a time)    |
+| Add message attributes (metadata - optional) | Process the message within the `visibility timeout`       |
+| Provide Delay delievery (optional)           | Delete the message using the message ID \& receipt handle |
+| Return: 1) message id 2) MD5 of the body     |                                                           |
+
+
+### SQS - Visibility Timeout
+
+When a consumer polls a message from a queue, the message is "invisible" to other consumers for a defined period -> `Visibility Timeout`
+
+- it can be from 0 second to 12 hours, the default value is 30 seconds
+- if `Visibility Timeout` is too high (say 15 minutes), then if consumer fails to process the message, you must wait 15 minutes before you can process it again
+- if `Visibility Timeout` is too low (say 5 seconds), if consumer need 2 minutes at least to process the message, then this message may be processed more than once
+
+
+:::info
+
+- `ChangeMessageVisibility`: this API is to change the visibility timeout value while processing a message
+- `DeleteMessage`: this API is to tell SQS the message was successfully processed
+
+:::
+
+
+### SQS - Dead Letter Queue
+
+If a consumer fails to process a message within the `Visibility Timeout`, the message will go back to the queue. However, we can set a *threshold* of <u>how many times a message can go back to the queue</u>, this is called **redrive policy**
+
+After the threshold is exceeded, the message goes into a dead letter queue (DLQ)
+
+> we have to create a DLQ first and then designate it dead letter queue, and we need make sure to process the messages in the DLQ before they expire
+
+
+### SQS - Long Polling
+
+When a consumer requests message from the queue (SQS is pull-based), it can optionally "wait" for messages to arrive if there are none in the queue, this is called **Long Polling**
+
+> Long Polling decreases the number of API calls made to SQS while increasing the efficiency and latency of the application
+
+The wait time can be between 1 sec to 20 secs, long polling is preferable to short polling
+
+:::note
+
+Long Polling can be enabled at the queue level or at teh API level using `WaitTimeSeconds`
+
+:::
+
+
+### SQS Messages Diagram
+
+![](/img/sqs.svg)
+
+
+
+:::info
+
+1. SQS is `pull-based`
 2. Messages are 256 KB in size
-3. Messages can be kept in the queue from 1 minute to 14 days the default retrntion period is 4 days
+3. Messages can be kept in the queue from 1 minute to 14 days, the default retrntion period is 4 days
 
 :::
 
@@ -130,7 +202,7 @@ Security
 
 
 
-## Kinesis 101
+## AWS Kinesis
 
 Amazon Kinesis is a platform on AWS to send your streaming data to. Kinesis makes it easy to load and analyze streaming data, and also providing the ability for you to build your own custom applications for your business needs.
 
