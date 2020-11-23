@@ -35,6 +35,14 @@ Types of queues in SQS:
    1. **Delay Queues**: it can delay a message up to 15 mins, the default is 0, this can be overwritten using the `DelaySeconds` parameter
 2. **FIFO Queues**: delivery and exactly-once processing. The order in which messages are sent and received is strictly preserved. It supports message groups.
 
+:::info
+
+1. SQS is `pull-based`
+2. Messages are 256 KB in size
+3. Messages can be kept in the queue from 1 minute to 14 days, the default retrntion period is 4 days
+
+:::
+
 Messages can be kept in the queue from 1 min to 14 days, the default retention period is 4 days. If a consumer does not handle the message in a `Visiblity Time Out` window (the max value is 12 hours), **the message will became available again to be available for another consumer**.
 
 SQS supports long polling as a way to retrieve messages when they are available rather than being short polling every some time.
@@ -97,13 +105,241 @@ Long Polling can be enabled at the queue level or at teh API level using `WaitTi
 
 
 
+### SQS - FIFO Queue
+
+- Name of the queue must end in `.fifo`
+- Lower throughput (3000 per second with batching, 300 /s without)
+- Messages are processed **in order** by the consumer
+- Messages are sent exactly **once**
+- No per message delay (only per queue delay)
+- Ability to do **content-based** de-duplication
+  - if two messages' body text are both `hello-sqs`, then you can only view one message in the SQS Console
+- 5-minute interval de-duplication using "Duplication ID"
+- Message Groups:
+  - Possibility to group messages for FIFO ordering using "Message GroupID"
+  - Only one worker can be assigned per message group so that messages are processed in order
+  - Message group is just an extra tag on the message
+
+
+### SQS - Auto Scaling Group
+
+![](https://raw.githubusercontent.com/Zhenye-Na/img-hosting-picgo/master/img/sqs-asg1.svg)
+
+![](https://raw.githubusercontent.com/Zhenye-Na/img-hosting-picgo/master/img/sqs-asg2.png)
+
+
+## SNS: Simple Notification Service
+
+SNS is a web service that makes it easy to set up, operate, and send notifications from the cloud. It provides developers with a highly scalable, flexible, and cost-effective capability to publish messages from an application and immediately deliver them to subscribers or other applications.
+
+- **Push** notifications: for devices like Android, Apple, Windows, Fire OS, ...
+- It also supports notifications by SMS or email or **SQS queue** or any HTTP endpoint.
+- It prevents losing messages by storing all the messages across multiple availability zones.
+- Inexpensive, pay-as-you-go model with no up-front costs.
+
+
+SNS allows you to group multiple recipients using **topics**. A topic is an "access point" for allowing recipients to dynamically subscribe for identical copies of the same notification. One topic can support deliveries to multiple endpoints types: grouping the iOS messages, the Android, the SMS... When you publish once to a topic, SNS delivers appropriately formatted copies of your message to each subscriber.
+
+
 :::info
 
-1. SQS is `pull-based`
-2. Messages are 256 KB in size
-3. Messages can be kept in the queue from 1 minute to 14 days, the default retrntion period is 4 days
+- Instanteneous, push-based message delievery
+- Simple APIs and easy integration
+- Flexible message delievery over multiple transport protocol
+- Inexpensive
 
 :::
+
+
+:::important
+
+SQS and SNS are both messaging services in AWS
+
+- SQS is pull-based
+- SNS is push-based
+
+:::
+
+
+### SNS - How to publish
+
+
+**Topic Publish** (within your AWS Server - using the SDK)
+
+- Create a topic
+- Create a subscription (or many)
+- Publish to the topic
+
+
+**Direct Publish** (for mobile apps SDK)
+
+- Create a platform application
+- Create a platform endpoint
+- Publish to the platform endpoint
+- Works with Google GCM, Apple APNS, Amazon ADM ...
+
+
+### SNS + SQS: Fan Out
+
+![](https://raw.githubusercontent.com/Zhenye-Na/img-hosting-picgo/master/img/sns-sqs-fanout.png)
+
+- Push once in SNS, receive in many SQS
+- Fully decoupled
+- No data loss
+- Ability to add receivers of data later
+- SQS allows for delayed processing
+- SQS allows for retries of work
+- May have many workers on one queue and one worker on the other queue
+
+
+
+## AWS Kinesis
+
+> Kinesis is a managed alternative to Apache Kafka
+
+![](https://raw.githubusercontent.com/Zhenye-Na/img-hosting-picgo/master/img/kinesis.png)
+
+Amazon Kinesis is a platform on AWS to send your streaming data to. Kinesis makes it easy to load and analyze streaming data, and also providing the ability for you to build your own custom applications for your business needs. Data is automatically replicated to 3 AZs
+
+There are three types of services:
+
+- Kinesis Streams: low latency streaming ingest at scale
+- Kinesis Analytics: perform real-time analytics on streams using SQL
+- Kinesis Firehose: load streams into S3, Redshift, ElastiSearch
+
+
+### Kinesis Streams Overview
+
+> Producers (devices) sent the data into Kinesis streams where the data will be from <u>24 hours to 7 days</u> (Data Retention Period). The data will store the data in **shards**. A shard is able to process 5 transactions per second for reads, up to a max total data read rate of 2MB per second and up to 1000 records per second for writes, up to a max total data write rate of 1MB per second (including partition keys). Then consumers (EC2) will analyse this data and produce the analysis in DynamoDB or S3 or EMR or Redshift. The capacity of your stream is the sum of the capacities of its shards.
+
+- Ability to reprocess / replay data
+- Multiple applications can consume the same stream
+- Real-time processing with scale of throughput
+- Once data is inserted in Kinesis, it can't be deleted (immutebility)
+
+
+#### Kinesis Streams Shards
+
+![](https://i.stack.imgur.com/LzF4k.png)
+
+- One stream is made of many different shards
+- 1 MB/s or 1000 messages/s at write PER SHARD
+- 2 MB/s at read PER SHARD
+- Billing is per shard procisioned, can have as many shards as you want
+- Batching available or per message calls
+- The number of shards can evolve over time (reshard / merge)
+- **Records are ordered per shard**
+
+
+#### Kinesis API - Put records
+
+- `PutRecord` API + Partition key that gets hashed
+- The same key goes to the same partition (helps with ordering for a specific key)
+- Messages sent get a "sequence number"
+- Choose a partition key that is highly distributed (helps prevent "hot partition")
+- Use Batching with `PutRecords` to reduce costs and increase throughput
+- `ProvisionedThroughputExceeded` if we go over the limits
+- Can use CLI, SDK or producer libraries from various frameworks
+
+
+#### Kinesis API - Exceptions
+
+`ProvisionedThroughputExceeded` Exception
+
+this happens when sending more data (exceeding MB/s or TPS for any shard), make sure you don't have a hot shard (such as your partition key is bad and too much data goes to that partition)
+
+Solution
+
+- retries with backoff
+- increase shards (scaling)
+- ensure your partition key is a good one
+
+
+#### Kinesis API - Consumers
+
+- can use a normal consumer (CLI, SDK, etc..)
+- can use Kinesis Client Library (KCL)
+  - KCL uses DynamoDB to checkpoint offsets
+  - KCL uses DynamoDB to track other workers and share teh work amongst shards
+
+
+### Kinesis Data Firehose
+
+> Producers (devices) sent the data into Kinesis Firehose which will analyse the data directly using lambda to be stored in S3 or any other storage. Here, there is no data persistence.
+
+- Fully managed service, no administration, automatic scaling, serverless
+- Load data into Redshift / Amazon S3 / ElasticSearch / Splunk
+- Near Real Time
+  - 60 seconds latency minimum for non full batches
+  - or minimum 32 MB of data at a time
+- Supports many data formats. conversions, transformations, compression
+- Pay for the amount of data going through Firehose
+
+
+:::important
+
+**Kinesis Data Streams vs Firehose**
+
+| Kinesis Data Streams                                             | Kinesis Firehose                                           |
+|------------------------------------------------------------------|------------------------------------------------------------|
+| Going to write custom code (producer \& consumer)                | Fully managed, send to S3, Splunk, Redshift, ElasticSearch |
+| Real time (~ 200ms)                                              | Serverless data trasformations with Lambda                 |
+| Must manage scaling (shard splitting / merging)                  | **Near** real-time (lowest buffer time is 1 minute)        |
+| Data Storage for 1 to 7 days, replay capability, multi consumers | Automated Scaling                                          |
+|                                                                  | No data storage                                            |
+
+:::
+
+
+### Kinesis Data Analytics
+
+> This is a combination of Streams with Firehose.
+
+Perform real-time analytics on Kinesis Streaming using SQL
+
+Kinesis Data Analytics has features like
+
+- Auto Scaling
+- Fully Managed, no servers to provision
+- Continuous: real time
+
+Pay for actual consumption rate and can create streams out of the real-time queries
+
+
+### Kinesis Security
+
+- Control access / authorization using IAM policies
+- Encryption is flight using HTTPS endpoints
+- Encryption at rest using KMS
+- Possibility to encrypt / decrypt data from client side (harder)
+- VPC Endpoints available for Kinesis to access with VPC
+
+
+
+## SQS vs SNS vs Kinesis
+
+| SQS                                             | SNS                                                 | Kinesis                                         |
+|-------------------------------------------------|-----------------------------------------------------|-------------------------------------------------|
+| Consumer "pull data"                            | Push data to many subscribers (Pub / Sub)           | Consumers "pull data"                           |
+| Data is deleted after being consumed            | Up to 10,000,000 subscribers and 100,000 topics     | As many consumers as we want                    |
+| Can have as many workers (consumers) as we want | Data is not persisted (lost if not delivered)       | Posiibility to replay data                      |
+| No need to provision throughput                 | No need to provision throughput                     | Meant for real-time big data, analytics and ETL |
+| No ordering guarantee (exxcept FIFO queues)     | Integrates with SQS for fanout architecture pattern | Odering at the shard level                      |
+| Individual message delay capability             |                                                     | Data Expires after X days                       |
+|                                                 |                                                     | Must provision throughtput                      |
+
+
+## Amazon MQ
+
+> Amazon Managed Apache ActiveMQ
+
+Tradidtion application running from on-premise may use optn protocols such as `MQTT`, `AMQP`, `STOMP`, `Openwire`, `WSS`
+
+Amazon MQ:
+
+- does not scale as much as SQS / SNS
+- it runs on a dedicated machine, can run in HA with failover
+- it has both queue feature (~ SQS) and topic features (~ SNS)
 
 
 ## SWF: Simple Work Flow Service
@@ -120,36 +356,6 @@ The main concepts:
 - Deciders: control the flow of activity tasks in a workflow execution. If something has finished (or failed) in a workflow, a Decider decides what to do next.
 - Activity Workers: carry out the activity tasks.
 - Domain: collection of related workflows.
-
-## SNS: Simple Notification Service
-
-SNS is a web service that makes it easy to set up, operate, and send notifications from the cloud. It provides developers with a highly scalable, flexible, and cost-effective capability to publish messages from an application and immediately deliver them to subscribers or other applications.
-
-- Push notifications: for devices like Android, Apple, Windows, Fire OS, ...
-- It also supports notifications by SMS or email or SQS queue or any HTTP endpoint.
-- It prevents losing messages by storing all the messages across multiple availability zones.
-- Inexpensive, pay-as-you-go model with no up-front costs.
-
-
-SNS allows you to group multiple recipients using topics. A topic is an “access point” for allowing recipients to dynamically subscribe for identical copies of the same notification. One topic can support deliveries to multiple endpoints types: grouping the IOS messages, the Android, the SMS… When you publish once to a topic, SNS delivers appropriately formatted copies of your message to each subscriber.
-
-
-
-:::tip
-
-- Instanteneous, push-based message delievery
-- Simple APIs and easy integration
-- Flexible message delievery over multiple transport protocol
-- Inexpensive
-
-:::
-
-
-:::important
-
-They are both messaging services in AWS, SQS is pull-based, SNS is push-based
-
-:::
 
 
 ## Elastic Transcoder
@@ -201,32 +407,6 @@ Security
 :::
 
 
-
-## AWS Kinesis
-
-Amazon Kinesis is a platform on AWS to send your streaming data to. Kinesis makes it easy to load and analyze streaming data, and also providing the ability for you to build your own custom applications for your business needs.
-
-There are three types:
-
-- Kinesis Streams
-- Kinesis Firehose
-- Kinesis Analytics
-
-
-### Kinesis Streams
-
-Producers (devices) sent the data into Kinesis streams where the data will be from 24 hours to 7 days. The data will store the data in shards. A shard is able to process 5 transactions per second for reads, up to a max total data read rate of 2MB per second and up to 1000 records per second for writes, up to a max total data write rate of 1MB per second (including partition keys). Then consumers (EC2) will analyse this data and produce the analysis in DynamoDB or S3 or EMR or Redshift. The capacity of your stream is the sum of the capacities of its shards.
-
-### Kinesis Firehose
-
-Producers (devices) sent the data into Kinesis Firehose which will analyse the data directly using lambda to be stored in S3 or any other storage. Here, there is no data persistence.
-
-### Kinesis Analytics
-
-This is a combination of Streams with Firehose.
-
-
-
 ## Cognito: Web Identity Federation
 
 Web Identity Federation lets you give your users access to AWS resources after they have successfully authenticated with a web-based identity provider like Amazon, Facebook, or Google.
@@ -246,6 +426,4 @@ Cognito brokers between the app and Facebook or Google to provide temporary cred
 ### Synchronisation
 
 Cognito tracks the association between user identity and the various different devices they sign-in from. In order to provide a seamless user experience for your application, Cognito uses Push Synchronization to push updates and synchronize user data across multiple devices. Cognito uses SNS is to send a notification to all the devices associated with a given user identity whenever data stored in the cloud changes.
-
-
 
