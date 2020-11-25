@@ -348,16 +348,15 @@ Patterns for ElastiCache
 1. Lazy Loading: all the read data is cached, data can become stale in cache
 2. Write Through: Adds or Update data in the cache when written to a DB (no stale data)
 3. Session Store: store temp session data in cache (using TTL features)
-4. 
 
 
 ## DynamoDB
 
-DynamoDB is AWS solution for NoSQL datbase, it supports **document** and **key-value pair** data models
+DynamoDB is AWS solution for **Serverless** NoSQL datbase, it supports **document** and **key-value pair** data models
 
 1. data is stored ion SSD Storage
-2. data spreads across **3** geographcally distinct data centers
-3. Eventually Conststent Reads (Default)
+2. High available with replication across **3** AZ (geographcally distinct data centers)
+3. **Eventually Conststent Reads** (Default)
 4. Strongly Consistent Reads
 
 :::important
@@ -374,6 +373,75 @@ This is for "Best Read Performance", this setting is enabled by default
 A Strongly Consistent Read returns result that reflects all writes that received a successful response prior the read
 
 :::
+
+
+### DynamoDB - Basics
+
+- DynamoDB is made of **tables**
+- Each table has a **primary key** (must be decided at creation time)
+- Each table can have an infinite number of items (= rows)
+- Each item has **attributes** (can be added over time - can be null)
+- Maximum size of a item is 400 KB
+
+
+### DynamoDB - Provisioned Throuput
+
+- Table must have provisioned read and write capacity units
+- **Read Capacity Units (RCU)**: throuput for reads
+  - 1 RCU: 1 strongly consistent read of 4 KB per second
+  - 1 RCU: 2 eventually consistent read of 4 KB per second
+- **Write Capacity Units (WCU)**: throughput for writes
+  - 1 WCU: 1 write of 1 KB per second
+- Option to setup auto-scaling of throughput to meet demand
+- Throughput can be exceeded temporarily using "burst credit"
+- If burst credit are empty, you'll get a `"ProvisionedThroughputException"`
+- It's then advised to do an exponential back-off retry
+
+
+### DynamoDB - DAX
+
+![](https://raw.githubusercontent.com/Zhenye-Na/img-hosting-picgo/master/img/dax_high_level.e4af7cc27485497eff5699cdf22a9502496cba38.png)
+
+DAX is DynamoDB Accelerator, it provide **seamless cache** for DynamoDB, no appliation re-write needed. Writes gothrough DAX then to DynamoDB.
+
+Multi-AZ is supported, 3 nodes minimum recommended for production
+
+
+
+### DynamoDB Streams
+
+![](https://raw.githubusercontent.com/Zhenye-Na/img-hosting-picgo/master/img/DDB-Stream1.png)
+
+- Changes in DynamoDB will end up in a DynamoDB Stream
+- This stream can be read by AWS Lambda, so we can do analytical jobs
+- Could implement cross region replication using Streams
+- It has 24 hours of data retention
+
+
+### DynamoDB - Security
+
+- VPC Endpoints available to access DynamoDB without internet
+- Access fully controlled by IAM
+- Encryption: KMS and SSL/TLS
+
+### DynamoDB - Other Features
+
+Global Tables:
+
+- Active Active replication in many regions
+- Must enable DynamoDB Streams
+- It is Low-latency, for Disaster Recovery
+
+Capacity Planning:
+
+- Planned capacity: provision WCU & RCU can enable auto scaling
+- ON-demand capacity: get unlimited WCU & RCU, no throttle, more expensive
+
+> rare workloads - on-demand capacity
+> 
+> predictable workloads which can be auto-scaled - planned capacity
+
+other features like, backup & restore, migration and you can even setup a local DYnamoDB for development
 
 
 ## RedShift
