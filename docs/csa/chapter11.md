@@ -174,9 +174,7 @@ Cognito lets you give your users access to AWS resources after they have success
 - Example:
   - provide (temporary) access towrite to S3 bukcet using Facebook login
 
-<div align="center">
-  <img src="https://raw.githubusercontent.com/Zhenye-Na/img-hosting-picgo/master/img/FIP.png" width="70%">
-</div>
+![](https://raw.githubusercontent.com/Zhenye-Na/img-hosting-picgo/master/img/FIP.png)
 
 ### Cognito Sync (Deprecated)
 
