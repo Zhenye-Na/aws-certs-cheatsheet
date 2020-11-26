@@ -11,7 +11,7 @@ module.exports = {
       title: 'AWS Cert. Cheatsheet',
       logo: {
         alt: 'My Site Logo',
-        src: 'img/logo.svg',
+        src: 'img/logo.png',
       },
       links: [
         {

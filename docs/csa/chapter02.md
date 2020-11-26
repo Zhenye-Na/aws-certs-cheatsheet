@@ -479,7 +479,7 @@ This is the origin ofall the files that the CDN will distribute. This can be an
 
 1. S3 Bucket
    1. for distributing files and caching them at the edge locations
-   2. enhanced security with CloudFront Origin Access Identity (OAI)
+   2. enhanced **security** with CloudFront **Origin Access Identity** (OAI)
    3. CloudFront can be used as an ingress (to upload files to S3)
 2. S3 Website
    1. must first enable the bucket as a **static S3 website**
@@ -528,9 +528,9 @@ How long should the URL be valid for ?
 > 
 > Signed Cookies : access to multiple files (one signed cookie for many files)
 
-:::important
 
-CloudFront Signed URL vs S3 Pre-Signed URL
+
+**CloudFront Signed URL vs S3 Pre-Signed URL**
 
 | CloudFront Signed URL                                        | S3 Pre-Signed URL                                    |
 |--------------------------------------------------------------|------------------------------------------------------|
@@ -540,7 +540,6 @@ CloudFront Signed URL vs S3 Pre-Signed URL
 | can leverage caching features                                |                                                      |
 | ![](https://raw.githubusercontent.com/Zhenye-Na/img-hosting-picgo/master/img/cloudfront-signed-urls.png)                         | ![](https://raw.githubusercontent.com/Zhenye-Na/img-hosting-picgo/master/img/s3-pre-signed-urls.png)                     |
 
-:::
 
 
 ### CoudFront Geo Restriction
