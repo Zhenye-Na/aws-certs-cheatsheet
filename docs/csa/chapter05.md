@@ -4,18 +4,41 @@ title: Database on AWS
 sidebar_label: RDS
 ---
 
-> We will cover Relational Database Service (RDS) on AWS, together with AWS Aurora, DynamoDB, RedShift and ElastiCache
+**Choose the right database**:
 
-# Database on AWS
+- balanced workload or heavy-read or heavy-write?
+- throughtput, does it fluctuate or something predictable
+- how much data to store, how long? average object size
+- data durability
+- latency requirement
+- data model
+- strong schema or flexible, SQL or NoSQL
+- License costs
 
-database types which are supported by AWS:
 
-- Postgres
-- MySQL
-- MariaDB
-- Oracle
-- Microsoft SQL Server
-- Aurora (* AWS Proprietary database)
+Database types which are supported by AWS:
+
+- Relational Database
+  - RDS
+    - Postgres
+    - MySQL
+    - MariaDB
+    - Oracle
+    - Microsoft SQL Server
+  - Aurora (* AWS Proprietary database)
+- NoSQL
+  - DynamoDB (~ JSON)
+  - ElastiCache (key-value pairs)
+  - Neptune (graphs) - no joins, no SQL
+- Object Store ("sort of")
+  - S3
+  - Glacier
+- Data Warehouse
+  - Redshift
+  - Athena (query data in S3 using SQL, so "sort of")
+
+
+## RDS Overview
 
 RDS is a managed service:
 
@@ -30,9 +53,6 @@ RDS is a managed service:
 
 **BUT, you cannot SSH into your instances**
 
-
-## RDS Overview
-
 There are two important features for RDS
 
 - Multi-AZ: this is for "Disaster Recovery"
@@ -41,6 +61,8 @@ There are two important features for RDS
 **OLTP vs OLAP**
 
 OLAP is for Data Warehousing on AWS (a different type of architecture both from a database perspective and infrastructure layer)
+
+***
 
 **ElasticCache**
 
@@ -52,22 +74,24 @@ It speeds up the performace of existing databases' frequent identical queries
 
 This is for BI / Data warehousing -> OLAP usage
 
+***
+
 **Relational Database**
 
 - RDS runs on virtual machine, but you cannot ssh to it
 - **RDS is NOT serverless, BUT Aurora Serverless IS Severless**
 
 
-## RDS - Backups, Multi-AZ & Read Replicas
+### RDS - Backups, Multi-AZ & Read Replicas
 
-### Backups
+#### Backups
 
 There are two types of Backups for RDS
 
 1. Automated Backups
 2. Database Snapshots
 
-#### Automated Backups
+##### Automated Backups
 
 It allows user to receover your database to any point in time within a  "Retention Period", this is around 7 ~ 35 days.
 
@@ -84,14 +108,14 @@ Automated backups:
 :::
 
 
-#### Database Snapshot
+##### Database Snapshot
 
 Database Snapshot are stored even after you delete the original RDS Instance
 
 Bur it is manually trigered by the user, and retention of backup for as long as you want
 
 
-### Multi-AZ
+#### Multi-AZ
 
 - It has only one DNS name, automatic app failover to standby, no manual intervention in apps
 - This is an exact copy of your production databse in `another AZ`
@@ -105,7 +129,7 @@ Bur it is manually trigered by the user, and retention of backup for as long as 
 This is only for **Disaster Recovery**, increase *availability*
 
 
-### Read Replicas
+#### Read Replicas
 
 This allows you to have a read-only copy of your production database.
 
@@ -126,14 +150,14 @@ Be careful for the difference between Read Replicas and the previous database ba
 
 :::
 
-#### Read Replicas - Network Cost
+##### Read Replicas - Network Cost
 
 In AWS, there is a network cost when data goes from one AZ to another, so in order to reduce cost, you can have your Read Replicas in the same AZ
 
 
-## RDS Securities
+### RDS Securities
 
-### Encryptions
+#### Encryptions
 
 This is achieved by using AWS KMS (Key Management Service), once the ecryption is on, the followings are encrypted:
 
@@ -148,7 +172,7 @@ Whenever you restore either an Automated Backup or Database Snapshot, the restor
 
 :::
 
-#### At rest encryption and In-flight encryption
+##### At rest encryption and In-flight encryption
 
 **At rest encryption**
 
@@ -165,7 +189,7 @@ Transparent Data Encryption (TDE) available for Oracle and SQL Server
 This allows to use SSL Certificates to encrypt data to RDS in flight, you have to provide SSL options with trust certificate when connecting to database
 
 
-### Network & IAM
+#### Network & IAM
 
 **Network Security**
 
@@ -178,7 +202,7 @@ This allows to use SSL Certificates to encrypt data to RDS in flight, you have t
 - traditional username/password can be used to log into the database
 - IAM-based authentication can be used to login to RDS MySQL & PostgreSQL
 
-#### IAM Authentication
+##### IAM Authentication
 
 - works with MySQL & PostgreSQL
 - no need for password, just a token obtained through IAM & RDS API call
@@ -278,7 +302,7 @@ This is the AWS solution to web-service-based in-memory cache
 - The same way RDS is to get managed Relational Databases
 - ElastiCache is to get managed Reids or Memcached
 - Helps reduce load off of databases for read intensive workloads
-- make application stateless
+- Make application stateless
 - Write Scaling using **Sharding**
 - Read Scaling using **Read Replicas**
 - Multi-AZ with failover Capability
@@ -352,6 +376,8 @@ Patterns for ElastiCache
 
 ## DynamoDB
 
+> DynamoDB can do transactions now
+
 DynamoDB is AWS solution for **Serverless** NoSQL datbase, it supports **document** and **key-value pair** data models
 
 1. data is stored ion SSD Storage
@@ -366,7 +392,6 @@ DynamoDB is AWS solution for **Serverless** NoSQL datbase, it supports **documen
 Consistency across all copies of data is usually reached within a second. Repeating a read after a short time should return the updated data.
 
 This is for "Best Read Performance", this setting is enabled by default
-
 
 **Strongly Consistent Reads**
 
@@ -446,11 +471,42 @@ other features like, backup & restore, migration and you can even setup a local 
 
 ## RedShift
 
-This is the AWS solution to Data Warehousing service, it supports massively Parallel processing (MPP)
+This is the AWS solution to Data Warehousing service, it supports **Massively Parallel Processing (MPP)**
 
-Backups for RedShift
+### Backups for RedShift
 
 - this is **enabled** by default and it has **1** day retention period, and maximum are 35 days
 - always attempt to maintain **at least 3 copies** of your data, the original or the replicas on the compute node, the backups are on AWS S3
 
 **But it is only available in one AZ**
+
+
+## Neptune
+
+Fully managed graph database
+
+- high relationship data
+- social network
+- knowledge graph
+
+Highly available across 3 AZ, with up to 15 read replicas, with point-in-time recovery, continuous backup to Amazon S3. Support KMS encryption at rest + HTTPS
+
+## Database in Solution Architectures
+
+### RDS
+
+### Aurora
+
+### ElastiCache
+
+### DynamoDB
+
+### S3
+
+### Athena
+
+### Redshift
+
+### ElasticSearch
+
+
