@@ -209,4 +209,38 @@ All the configuration is YAML, covers:
 
 ## Discussion on Serverless Solution Architecture
 
-to be continued
+### To-do list App
+
+![](https://raw.githubusercontent.com/Zhenye-Na/img-hosting-picgo/master/img/todo-app.png)
+
+### Blog App
+
+![](https://raw.githubusercontent.com/Zhenye-Na/img-hosting-picgo/master/img/blog-app.png)
+
+### Microservices
+
+![](https://raw.githubusercontent.com/Zhenye-Na/img-hosting-picgo/master/img/micro-services.png)
+
+### Distribute Paid Content
+
+In short, this can be a great fit for premium user video, here is an example solution we can provide:
+
+- Cognito for authentication
+- DynamoDB for storing users that are premium
+- 2 serverless applications
+  - premium user registration
+  - CloudFront Signed URL generator
+- Content is stored in S3 (serverless and scalable)
+- Integrated with CloudFront with OAI for security (users cannot bypass)
+- CloudFront can only be used with SIgned URLs to prevent unauthorized users
+- What about S3 Signed URL? They're not efficient for global access 
+
+![](https://raw.githubusercontent.com/Zhenye-Na/img-hosting-picgo/master/img/distribute-paid-content.png)
+
+### Software update release
+
+![](https://raw.githubusercontent.com/Zhenye-Na/img-hosting-picgo/master/img/software-releases.png)
+
+### Big Data Pipeline
+
+![](https://raw.githubusercontent.com/Zhenye-Na/img-hosting-picgo/master/img/big-data-pipeline.png)
