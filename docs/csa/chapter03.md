@@ -170,8 +170,6 @@ All AMIs are categorized as either backed by Amazon EBSjor backed by instance st
 **For EBS Volumes:** The root device for an instance launched from the AMI is an *Amazon EBS volume* created from an *Amazon EBS snapshot*. Think of EBS as a virtual hard disk
 
 
-
-
 **For Instance Store Volumes:** The root device for an instance launched from the AMI is an *instance store* volume created from a template stored in *Amazon S3*. Think of snapshots as a photograph of the disk
 
 
@@ -182,47 +180,6 @@ All AMIs are categorized as either backed by Amazon EBSjor backed by instance st
 3. You can share snapshots, but only if they are unencrypted
 4. These snapshots can be shared with other AWS accounts or made public
 5. You can now encrypt root device volumes upon creation of EC2 Instance
-
-:::
-
-
-### CloudWatch vs CloudTrail
-
-#### CloudWatch
-
-**AWS CloudWatch** is a monitoring service to monitor your AWS resources, as well as the applications that you run on AWS. Metrics like CPU, network, disk, status check.
-
-
-- CloudWatch is about monitoring performance.
-- CloudWatch with EC2 will monitor events every 5 minutes by default.
-- You can have 1 minute intervals by turning on detailed monitoring.
-- You can create CloudWatch alams which trigger notifications.
-- What can CloudWatch do?
-  - **Dashboards**: Creates awesome dashboards to see what is happening with your AWS environment.
-  - **Alarms**: Allows you to set Alarms that notify you when particular thresholds are hit.
-  - **Events**: Helps you to responde to state changes in your AWS resources.
-  - **Logs**: Aggregates log data.
-
-
-CloudWatch can monitor:
-
-1. Compute Resources: EC2 Instances, Autoascaling Group, Elastic Load Balancers, Route53 Health Check
-2. Storage & Content Delievery: EBS Volumes, Storage Gateways, CloudFront
-
-
-#### CloudTrail
-
-**AWS CloudTrail** increases visibility into your user and resource activity by <u>recording AWS Management Console actions and API calls</u>. You can identify which users and accounts called AWS, the source IP address from which the calls were made, and when the calls occurred.
-
-
-:::tip
-
-1. CloudWatch is used for monitoring performance
-2. CloudWatch can monitor most of AWS as well as your applications that run on AWS
-3. CloudWatch with EC2 will monitor events every 5 minutes by default
-4. But you can have 1 minute interval by turning on detailed monitoring
-5. You can create CloudWatch alarms which trigger notifications
-6. CloudWatch is all about **Performance**, CloudTrail is all about **Auditing**
 
 :::
 
