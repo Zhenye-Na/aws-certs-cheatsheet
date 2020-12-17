@@ -69,7 +69,9 @@ module.exports = {
       ],
       copyright: `Copyright © ${new Date().getFullYear()} Zhenye Na Built with Docusaurus and ❤️.`,
     },
-    googleAdClient: "ca-pub-6161588707523400",
+    googleAdsense: {
+      dataAdClient: "ca-pub-6161588707523400",
+    },
   },
   presets: [
     [
