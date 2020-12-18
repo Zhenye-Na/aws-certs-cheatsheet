@@ -67,7 +67,7 @@ To give access to KMS to someone:
 - make sure the IAM Policy allows the API Calls
 
 
-### AWS Functionality
+### KMS Functionality
 
 - Able to fully manage the keys & policies, Create, Rotation policies, Disable, Enable
 - Able to audit key usage (with CloudTrail)
@@ -98,3 +98,140 @@ All the encryption and decryption happen inside of KMS, and it will check for th
 
 - S3
 
+
+## AWS SSM Parameter Store
+
+- Secure storage for configuration and secrets
+- Optional Searmless Encryption using KMS
+- Version tracking of configurations / secrets
+- Configuration management using path & IAM
+- Integration with CloudFormation
+
+
+AWS Parameter Store has a "tree" structure, which means it can have similar structure to the below:
+
+```
+/my-app
+  /dev
+    /db-password
+    /db-username
+  /prod
+    /db-username
+    /db-password
+  /test
+    ....
+```
+
+Example for using SSM with Lambda:
+
+```python
+import json
+import boto3
+
+ssm = boto3.client("ssm", region_name="us-west-1")
+
+def lambda_handler(event, context):
+    db_url = ssm.get_parameters(Names=["/my-app/dev/db-url"])
+    db_pwd = ssm.get_parameters(Names=["/my-app/dev/db-pwd"], WithDecryption=True)
+    return [db_url, db_pwd]
+```
+
+serveral settings for IAM role to make the above example work:
+
+- `ssm.get_parameters(Names=["/my-app/dev/db-url"])` - IAM Policies for SSM, `getParameters`
+- `ssm.get_parameters(Names=["/my-app/dev/db-pwd"], WithDecryption=True)` - IAM Policies for KMS `Decrypt`
+
+
+## AWS Secrets Manager
+
+- newer service for storing secrets
+- it has capability to `force rotation of secrets` every X days
+- automate generation of secrets on rotation (uses Lambda)
+- integration with Amazon RDS (MySQL, PostgreSQL, Aurora)
+- secrets are encrypted using KMS
+
+secrets rotation, RDS integration - secrets manager
+
+
+## CloudHSM
+
+> KMS -> AWS manages the software for encryption  
+> CloudHSM -> AWS provisions ecryption hardware
+
+- It provide dedicated Hardware (HSM represents Hardware Security Module)
+- **You** manage your own encryption keys entirely
+- HSM device is tamper resistant
+- **CloudHSM clusters are spread across Multi AZ (HA), you must setup first**
+- Supports both symmetric and asymmetric encryption (SSL/TLS keys)
+- No free tier | Must ise the CloudHSM Client Software
+- With option to use with SSE-C encryption
+
+
+![](https://raw.githubusercontent.com/Zhenye-Na/img-hosting-picgo/master/img/cloudhsm.png)
+
+- IAM Permissions: CRUD an HSM Cluster
+- CloudHSM Software: Manage the Keys and Users
+
+
+## AWS Shield - DDoS Protection
+
+### AWS Shield Standard
+
+This is a free service, activated for every AWS customer. It provides protection from attacks such as SYN/UDP Floods, Reflection attacks and other layer 3 / layer 4 attacks
+
+### AWS Shield Advanced
+
+This provide optional DDoS mitigation service ($3000 per month per organization). It protects against more sophisticated attack on EC2, ELB, CloudFront, AWS Global Accelerator and Route53
+
+It can protect against hiher fees during usage spikes due to DDoS
+
+
+## AWS WAF - Web Application Firewall
+
+- Protects your web application from common web exploits (layer 7)
+- Deploy on **Application Load Balancer, API Gateway, CloudFront**
+
+:::important
+
+**WAF is not for DDoS protection**
+
+:::
+
+- Define Web ACL (Web Access Control List):
+  - Rules can include IP adresses, HTTP headers, HTTP body, or URI strings
+  - Protects from common attack - SQL injection and Cross-Site Scripting (XSS)
+  - Size constrints, Geo match
+  - Rate-based rules (to count occurences of events)
+
+
+## AWS Firewall Manager
+
+- Manage rules in all accounts of an AWS Organization
+- Common set of security rules
+  - WAF rules
+  - AWS Shield Advanced
+  - Security Groups for EC2 and ENI resources in VPC
+
+
+## Sample Reference Architecture for DDoS Protection
+
+![](https://docs.aws.amazon.com/whitepapers/latest/aws-best-practices-ddos-resiliency/images/image6.png)
+
+> References: https://docs.aws.amazon.com/whitepapers/latest/aws-best-practices-ddos-resiliency/mitigation-techniques.html
+
+
+## Shared Responsibility Model
+
+Take RDS for example:
+
+| AWS Responsibility                                               | YOUR Responsibility                                                       |
+|------------------------------------------------------------------|---------------------------------------------------------------------------|
+| Manage the underlying EC2 instance, disable SSH access           | Check the ports / IP / SG inbound rules in DB's SG                        |
+| Automated DB / OS Patching                                       | In-database user creation and permissions                                 |
+| Audit the underlying instance and disks & guarantee it functions | Creating a database with or without public access                         |
+| etc..                                                            | Ensure parameter groups or DB is configured to only allow SSL connections |
+|                                                                  | Database encryption setting                                               |
+|                                                                  | etc..                                                                     |
+
+
+![](https://d1.awsstatic.com/security-center/Shared_Responsibility_Model_V2.59d1eccec334b366627e9295b304202faf7b899b.jpg)
