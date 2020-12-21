@@ -372,44 +372,107 @@ Exam Tip: Make sure the bastion host only has port 22 traffic from the IP you ne
 
 ## Direct Connect
 
-```
-#TODO
-```
-
 AWS Direct Connect is a cloud service solution that makes it easy to establish a dedicated network connection from your premises to AWS. Therefore, we can establish private connectivity between AWS and your datacenter, office, or colocation environment, which in many cases can reduce your network costs, increase bandwidth throughput and provide a more consistent network experience than Internet-based connections.
 
+- Provides a dedicated **private** connection from a remote network to your VPC
+- Dedicated connection must be setup between your DC and AWS Direct Connect locations
+- You need to setup a **Virtual Private Gateway** on your VPC
+- Access public resources (S3) and private (EC2) on same connection
+- Use cases:
+  - Increase bandwidth throughput - working with large datasets, lower cost
+  - More consistent network experience - applications using real-time data feeds
+  - Hybrid Environments (on prem + cloud)
+- Supports both IPv4 and IPv6
+
+If you want to setup a Direct Connect to one or more VPC in many different regions (same account), you must use a Direct Connect Gateway
 
 
+### Direct Connect - Connection Types
 
+#### Dedicated Connections
+
+- Physical ethernet port dedicated to a customer
+- Request made to AWS first, then completed by Direct Connect Partners
+
+#### Hosted Connections
+
+- Connection requests are made via AWS Direct Connect Partners
+- Capacity can be added or removed on demand
+- 1,2,5,10 Gbps available at select AWS Direct Connection Partners
+
+Lead times are often longer than 1 month to establish a new connection
+
+
+### Direct Connect - Encryption
+
+- Data in transit is **not encrypted** but is private
+- AWS Direct Connect + VPN provides an IPsec-encrypted private connection
+- Good for an extral level of security, but slightly more complex to put in place
 
 
 ## Egress Only Internet Gateway
 
 > Egress means Outgoing
 
+- Egress only Internet Gateway is for IPv6 only
+- Similar function as a NAT, but a NAT is for IPv4
+  - IPv6 are all public address
+- Egress only Internet Gateway gives our UPv6 instances access to the internet, but they won't be directly reachable by the internet
+- After creating an Egress only Internet Gateway, edit the route tables
 
 
 ## AWS PrivateLink (VPC Endpoints Services)
 
 ![](https://raw.githubusercontent.com/Zhenye-Na/img-hosting-picgo/master/img/aws-privatelink.png)
 
+- Most secure & scalable wayt o expose a service to 1000s of VPC (own or other accounts)
+- Does not require VPC Peering, Internet Gateway, NAT, Route Tables
+- Requires a network load balancer (Service VPC) and ENI (Customer VPC)
+
 
 ## AWS ClassicLink (Deprecated)
 
 > EC2-Classic or AWS ClassicLink
 
+- EC2-Classic: instances run in a single network shared with other customers
+- Amazon VPC: your instances run logically isolated to your AWS account
+- Classic Link: allows you to link EC2-Classic instances to a VPC in your account
+  - Must associate a security group
+  - Enables communication using private IPv4 addresses
+  - Removes the need to make use of public IPv4 addresses or Elastic IP addresses
 
-
+**Likely to be distractors at the exam**
 
 ## VPN CloudHub
 
-
-
+- Provide secure communication between sites, if you have multiple VPN connections
+- Low cost hub-and-spoke model for primary or secondary network connectivity between locations
+- it's a VPN connection so it goes over the public internet
 
 
 ## VPC Section Summary
 
 
-
-
+| Service                             | Description                                                                                                                                                                             |
+|-------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| CIDR                                | IP Range                                                                                                                                                                                |
+| VPC                                 | Virtual Private Cloud => we define a list of IPv4 & IPv6 CIDR                                                                                                                           |
+| Subnets                             | Tied to an AZ, we define a CIDR                                                                                                                                                         |
+| Route Tables                        | Must be edited to add routes from subnets to the IGW, VPC Peering Connections, VPC Endpoints, etc..                                                                                     |
+| NAT Instances                       | Gives internet access to instances in private subnets. Old, must be setup in a public subnet, disable `Source / Destination check` flag                                                 |
+| NAT Gateway                         | Managed by AWS, provides scalable internet access to private instances, IPv4 only                                                                                                       |
+| PRivate DNS + Route 53              | Enable DNS Resolution + DNS Hostnames (VPC)                                                                                                                                             |
+| NACL                                | Stateless, subnet rules for inbound and outbound, don't forget ephemeralports                                                                                                           |
+| Security Groups                     | Stateful, operate at the EC2 instance level                                                                                                                                             |
+| VPC Peering                         | Connect two VPC with non overlapping CIDR, non transitive                                                                                                                               |
+| VPC Endpoints                       | Provide private access to AWS Services (S3, DynamoDB, CloudFormation, SSM) within VPC                                                                                                   |
+| VPC Flow Logs                       | Can be setup at the VPC / Subnet / ENI Level, for `ACCEPT` and `REJECT` traffic, helps identifying attacks, analyze using Athena or CloudWatch Log Insights                             |
+| Bastion Host                        | Public instance to SSH into, that has SSH connectivity to instances in subnets                                                                                                          |
+| Site to Site VPN                    | Setup a Customer Gateway on DC, a Virtual Private Gatewayon VPC, and site-to-site VPN over public internet                                                                              |
+| Direct Connect                      | Setup a Virtual Private Gateway on VPC, and establish a direct private connection to an AWS Direct Connect Location                                                                     |
+| Direct Connect Gateway              | Setup a Direct Connect to many VPCs in different regions                                                                                                                                |
+| Internet Gateway Egress             | Like a NAT Gateway, but for IPv6                                                                                                                                                        |
+| PrivateLink / VPC Endpoint Services | Connect services privately from your service VPC to customers VPC; Does not need VPC peering, public internet, NAT gateway, route tables; Must be used with Network Load Balancer & ENI |
+| ClassicLink                         | Connect EC2-Classic instances priately to your VPC                                                                                                                                      |
+| VPC CloudHub                        | Hub-and-spoke VPN model to conect your sites                                                                                                                                            |
 
