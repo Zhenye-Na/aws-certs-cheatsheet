@@ -3,8 +3,6 @@
 [![Website shields.io](https://img.shields.io/website-up-down-green-red/http/shields.io.svg?style=flat-square)](http://shields.io/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 [![MIT license](https://img.shields.io/badge/License-MIT-brightgreen.svg?style=flat-square)](https://lbesson.mit-license.org/)
-[![HitCount](http://hits.dwyl.com/Zhenye-Na/aws-certs-cheatsheet.svg)](http://hits.dwyl.com/Zhenye-Na/aws-certs-cheatsheet)
-
 
 > This website is built with [Docusaurus 2](https://v2.docusaurus.io/), and deployed with [Vercel](https://vercel.com/)
 
@@ -33,4 +31,6 @@ $ yarn build
 
 ## Other Resources
 
-TODO
+- AWS Certified Solutions Architect Practice Tests (Paper-based)
+- http://www.briefmenow.org/amazon/
+- https://www.lleicloud.com/index.php/aws-certified-solutions-architect-practice-tests/
