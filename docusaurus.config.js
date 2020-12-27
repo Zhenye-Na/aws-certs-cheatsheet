@@ -71,7 +71,7 @@ module.exports = {
     },
     googleAdsense: {
       dataAdClient: "ca-pub-6161588707523400",
-    }
+    },
   },
   presets: [
     [
@@ -90,5 +90,14 @@ module.exports = {
   ],
   plugins: [
     'docusaurus-plugin-google-adsense',
-  ]
+    [
+      '@docusaurus/plugin-sitemap',
+      {
+        cacheTime: 600 * 1000, // 600 sec - cache purge period
+        changefreq: 'weekly',
+        priority: 0.5,
+        trailingSlash: false,
+      },
+    ],
+  ],
 };

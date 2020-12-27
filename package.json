@@ -10,8 +10,11 @@
   },
   "dependencies": {
     "@docusaurus/core": "^2.0.0-alpha.50",
+    "@docusaurus/plugin-ideal-image": "^2.0.0-alpha.70",
+    "@docusaurus/plugin-sitemap": "^2.0.0-alpha.70",
     "@docusaurus/preset-classic": "^2.0.0-alpha.50",
     "classnames": "^2.2.6",
+    "docusaurus-plugin-google-adsense": "^0.1.0",
     "react": "^16.8.4",
     "react-dom": "^16.8.4"
   },
@@ -26,8 +29,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "devDependencies": {
-    "docusaurus-plugin-google-adsense": "^0.1.0"
   }
 }
