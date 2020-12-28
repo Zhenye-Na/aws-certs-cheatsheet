@@ -15,7 +15,7 @@ description: >-                        # used by seo meta and the atom feed
   Cheatsheets for AWS Certified Exams.
 
 # fill in the base hostname & protocol for your site, e.g., 'https://username.github.io'
-url: 'https://zhenye-na.github.io/aws-cert-cheatsheet'
+url: 'https://zhenye-na.github.io/'
 
 author: Zhenye Na                  # change to your full name
 
@@ -28,8 +28,8 @@ github:
 #   username: twitter_username            # change to your twitter username
 
 social:
-  name: your_full_name                  # it will shows as the copyright owner in Footer
-  email: example@doamin.com             # change to your email address
+  name: Zhenye Na                  # it will shows as the copyright owner in Footer
+  email: nazhenye@gmail.com             # change to your email address
   links:
     # The first element serves as the copyright owner's link
     # - https://twitter.com/username      # change to your twitter homepage
