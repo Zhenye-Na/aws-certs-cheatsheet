@@ -33,7 +33,7 @@ social:
   links:
     # The first element serves as the copyright owner's link
     # - https://twitter.com/username      # change to your twitter homepage
-    - https://github.com/zhenye-na       # change to your github homepage
+    - https://github.com/Zhenye-Na/aws-certs-cheatsheet       # change to your github homepage
     # Uncomment below to add more social links
     # - https://www.facebook.com/username
     # - https://www.linkedin.com/in/username
@@ -77,7 +77,7 @@ disqus:
 #
 #     dark   - Use the dark color scheme
 #
-theme_mode: dark  # <light|dark>
+theme_mode: light  # <light|dark>
 
 # boolean type, the global switch for ToC in posts.
 toc: true
