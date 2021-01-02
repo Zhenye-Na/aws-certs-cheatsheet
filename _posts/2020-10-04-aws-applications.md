@@ -67,12 +67,12 @@ When a consumer polls a message from a queue, the message is "invisible" to othe
 - if `Visibility Timeout` is too low (say 5 seconds), if the consumer need 2 minutes at least to process the message, then this message may be processed more than once
 
 
-**Note**
-
-- `ChangeMessageVisibility`: this API is to change the visibility timeout value while processing a message
-- `DeleteMessage`: this API is to tell SQS the message was successfully processed
-
-
+<div class="alert alert-secondary" role="alert">
+  <ul>
+    <li><code>ChangeMessageVisibility</code>: this API is to change the visibility timeout value while processing a message</li>
+    <li><code>DeleteMessage</code>: this API is to tell SQS the message was successfully processed</li>
+  </ul>
+</div>
 
 
 ### SQS - Dead Letter Queue
@@ -92,9 +92,10 @@ When a consumer requests message from the queue (SQS is pull-based), it can opti
 
 The wait time can be between 1 sec to 20 secs, long polling is preferable to short polling
 
-**Note**
 
-Long Polling can be enabled at the queue level or the API level using `WaitTimeSeconds`
+<div class="alert alert-secondary" role="alert">
+  Long Polling can be enabled at the queue level or the API level using <code>WaitTimeSeconds</code>
+</div>
 
 
 
@@ -140,13 +141,15 @@ SNS is a web service that makes it easy to set up, operate, and send notificatio
 SNS allows you to group multiple recipients using **topics**. A topic is an "access point" for allowing recipients to dynamically subscribe for identical copies of the same notification. One topic can support deliveries to multiple endpoint types: grouping the iOS messages, the Android, the SMS... When you publish once to a topic, SNS delivers appropriately formatted copies of your message to each subscriber.
 
 
-**Note**
-
-- Instantaneous, push-based message delivery
-- Simple APIs and easy integration
-- Flexible message delivery over multiple transport protocol
-- Inexpensive
-
+<div class="alert alert-secondary" role="alert">
+  <p>SQS and SNS are both messaging services in AWS</p>
+  <ul>
+    <li>Instantaneous, push-based message delivery</li>
+    <li>Simple APIs and easy integration</li>
+    <li>Flexible message delivery over multiple transport protocol</li>
+    <li>Inexpensive</li>
+  </ul>
+</div>
 
 
 <div class="alert alert-primary" role="alert">
