@@ -144,13 +144,9 @@ the alternative to AWS SSM
 
 
 <div class="alert alert-secondary" role="alert">
-
-How to use it:
-
-store media files in S3 -> trigger an action in lambda -> run elastic transcoder -> destination of output in s3.
-
-Media transcoder convert media files from original formats to other compatible formats
-
+  <p>How to use it:</p>
+  <p>store media files in S3 -&gt; trigger an action in lambda -&gt; run elastic transcoder -&gt; destination of output in s3.</p>
+  <p>Media transcoder convert media files from original formats to other compatible formats</p>
 </div>
 
 
