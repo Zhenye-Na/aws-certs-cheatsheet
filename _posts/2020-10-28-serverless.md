@@ -233,7 +233,7 @@ In short, this can be a great fit for premium user video, here is an example sol
   - CloudFront Signed URL generator
 - Content is stored in S3 (serverless and scalable)
 - Integrated with CloudFront with OAI for security (users cannot bypass)
-- CloudFront can only be used with SIgned URLs to prevent unauthorized users
+- CloudFront can only be used with Signed URLs to prevent unauthorized users
 - What about S3 Signed URL? They're not efficient for global access
 
 ![](https://raw.githubusercontent.com/Zhenye-Na/img-hosting-picgo/master/img/distribute-paid-content.png)

@@ -306,7 +306,7 @@ Pay for actual consumption rate and can create streams out of the real-time quer
 ### Kinesis Security
 
 - Control access/authorization using IAM policies
-- Encryption is flight using HTTPS endpoints
+- Encryption in flight using HTTPS endpoints
 - Encryption at rest using KMS
 - Possibility to encrypt/decrypt data from client-side (harder)
 - VPC Endpoints available for Kinesis to access with VPC
