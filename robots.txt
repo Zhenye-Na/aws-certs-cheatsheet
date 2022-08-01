@@ -1,0 +1,5 @@
+User-agent: *
+
+Disallow: /norobots/
+
+Sitemap: https://zhenye-na.github.io//aws-certs-cheatsheet/sitemap.xml
